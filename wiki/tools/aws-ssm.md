@@ -2,7 +2,7 @@
 title: AWS Systems Manager (SSM)
 type: tool
 tags: [aws, ssm, run-command, session-manager, ec2, security]
-sources: [raw/step-function-runtime-logging.md, raw/kubernetes_system_design_review.md]
+sources: [raw/step-function-runtime-logging.md, raw/kubernetes_system_design_review.md, raw/base-stack-review.md]
 created: 2026-04-13
 updated: 2026-04-14
 ---
@@ -55,23 +55,47 @@ Opens a root bash session via `AWS-StartInteractiveCommand` with `sudo su -`. Th
 
 ## SSM Parameter Store
 
-Used as the single source of truth for environment-specific values:
+Used as the single source of truth for environment-specific values. All paths use the prefix `/k8s/{environment}`.
 
-**Bootstrap parameters:**
-- `{prefix}/security-group-id` — Cluster SG
-- `{prefix}/join-token` — `kubeadm join` token (SecureString)
-- `{prefix}/ca-hash` — `kubeadm join` CA hash
-- `{prefix}/control-plane-endpoint` — API server hostname:port
-- `{prefix}/scripts-bucket` — S3 boot script source
-- `{prefix}/golden-ami/latest` — Golden AMI ID
+### BaseStack Outputs (14 parameters)
 
-**Runtime parameters:**
-- `/k8s/development/bootstrap/control-plane-instance-id` — CP instance ID
-- `/k8s/development/bootstrap/state-machine-arn` — SM-A ARN
-- `/k8s/development/bootstrap/config-state-machine-arn` — SM-B ARN
+Published by `KubernetesBaseStack` at deploy time. See [[cdk-kubernetes-stacks]] for the full stack context.
+
+| SSM Parameter Path | Value Source | Consumed By |
+|---|---|---|
+| `/k8s/{env}/vpc-id` | VPC lookup | Control Plane, Worker, Edge, Observability |
+| `/k8s/{env}/elastic-ip` | EIP address | Edge stack (CloudFront origin) |
+| `/k8s/{env}/elastic-ip-allocation-id` | EIP allocation ID | NLB subnet mapping |
+| `/k8s/{env}/security-group-id` | Cluster base SG ID | Control Plane + Worker (node SG) |
+| `/k8s/{env}/control-plane-sg-id` | Control plane SG ID | Control Plane stack |
+| `/k8s/{env}/ingress-sg-id` | Ingress SG ID | Control Plane + Worker stacks |
+| `/k8s/{env}/monitoring-sg-id` | Monitoring SG ID | Worker ASG stack (monitoring pool) |
+| `/k8s/{env}/scripts-bucket` | S3 bucket name | CI pipeline, user-data scripts |
+| `/k8s/{env}/hosted-zone-id` | Route 53 zone ID | Control Plane (user-data updates A record) |
+| `/k8s/{env}/api-dns-name` | `k8s-api.k8s.internal` | Control Plane (`kubeadm --control-plane-endpoint`) |
+| `/k8s/{env}/kms-key-arn` | KMS key ARN | Observability stack (CloudWatch log encryption) |
+| `/k8s/{env}/nlb-full-name` | NLB full name | CloudWatch metrics (NLB target health dashboards) |
+| `/k8s/{env}/nlb-http-target-group-arn` | NLB HTTP TG ARN | Worker ASG stack (both pools register) |
+| `/k8s/{env}/nlb-https-target-group-arn` | NLB HTTPS TG ARN | Worker ASG stack (both pools register) |
+
+### Bootstrap parameters (published by control_plane.py at runtime)
+
+- `/k8s/{env}/join-token` — `kubeadm join` token (SecureString)
+- `/k8s/{env}/ca-hash` — `kubeadm join` CA hash
+- `/k8s/{env}/control-plane-endpoint` — API server hostname:port
+- `/k8s/{env}/control-plane-instance-id` — CP instance ID
+- `/k8s/{env}/prometheus-basic-auth` — Prometheus credentials
+- `/k8s/{env}/cloudfront-origin-secret` — `X-Origin-Verify` header value
+
+### Runtime parameters (published by SsmAutomation stack)
+
+- `/k8s/{env}/bootstrap/state-machine-arn` — SM-A ARN
+- `/k8s/{env}/bootstrap/config-state-machine-arn` — SM-B ARN
+- `/k8s/{env}/bootstrap/control-plane-doc-name` — SSM document name
 - Cognito pool IDs, DynamoDB table names, app secrets
 
-**DR backup parameters (SecureString):**
+### DR backup parameters (SecureString)
+
 - `{prefix}/tls-cert` — Traefik `ops-tls-cert`
 - `{prefix}/argocd-jwt-key` — ArgoCD JWT signing key
 - `{prefix}/argocd-admin-password` — ArgoCD admin password
@@ -107,6 +131,7 @@ The Golden AMI pre-installs a Python venv at `/opt/k8s-venv/` with `boto3`, `pyy
 ## Related Pages
 
 - [[k8s-bootstrap-pipeline]] — project using SSM
+- [[cdk-kubernetes-stacks]] — full 14-parameter BaseStack SSM output table
 - [[aws-step-functions]] — orchestration layer calling SSM
 - [[ssm-permission-denied]] — EBS volume permissions troubleshooting
 - [[k8s-bootstrap-commands]] — SSM-related just recipes and CLI commands

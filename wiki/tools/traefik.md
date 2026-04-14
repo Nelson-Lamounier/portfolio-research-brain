@@ -2,7 +2,7 @@
 title: Traefik
 type: tool
 tags: [kubernetes, ingress, networking, tls, traefik, daemonset, observability]
-sources: [raw/kubernetes_system_design_review.md]
+sources: [raw/kubernetes_system_design_review.md, raw/kubernetes_app_review.md]
 created: 2026-04-14
 updated: 2026-04-14
 ---
@@ -84,14 +84,43 @@ Monitoring services (Grafana, Prometheus) are **not** fronted by CloudFront — 
 
 ArgoCD v3's PDB health check incorrectly marks DaemonSet PDBs as `Degraded` whenever `disruptionsAllowed == 0` — which happens whenever only one replica is running on a node. This is a known upstream behaviour. The Traefik PDB is deliberately not created; rolling update behaviour is controlled by `maxUnavailable: 1` in the DaemonSet update strategy.
 
+## IngressRoute Ownership — Not ArgoCD-Managed
+
+The Traefik `IngressRoute` for Next.js and the preview service is **not managed by ArgoCD**. It is owned exclusively by `deploy.py` (SM-B Step 5). The reason: the IngressRoute match rule contains the CloudFront origin secret:
+
+```
+Host(...) && PathPrefix(/) && HeaderRegexp(X-CloudFront-Origin-Secret, <secret>)
+```
+
+This secret is read from SSM at deploy time and must not be committed to git. If ArgoCD managed the IngressRoute, every 3-minute self-heal cycle would overwrite the runtime-injected secret with the git-committed placeholder `^PLACEHOLDER_NEVER_MATCHES$`, silently dropping all user traffic.
+
+### Secret Rotation Pattern
+
+During zero-downtime CloudFront origin secret rotation, `deploy.py` writes an OR regex matching both old and new values for 20 minutes while CloudFront propagates:
+
+```
+old_escaped|new_escaped
+```
+
+After propagation, the next deploy drops the old value.
+
+### IngressRoute Priority Cascade
+
+```
+priority 200  start-admin  PathPrefix(`/admin`)           ← most specific
+priority 100  nextjs-preview  PathPrefix(`/`) && Header(`X-Preview`, `true`)
+priority  50  nextjs (production)  PathPrefix(`/`)         ← catch-all
+```
+
 ## IP Allowlist (Monitoring Routes)
 
-An IP allowlist Traefik middleware is created in step 7b of the [[argocd]] bootstrap, restricting access to monitoring `IngressRoute`s to operator IPs only. This prevents public exposure of Grafana and Prometheus without an additional auth layer.
+An IP allowlist Traefik middleware is created in step 10 of the [[argocd]] bootstrap, restricting access to monitoring `IngressRoute`s (Grafana, Prometheus) to operator IPs only. The CIDRs are injected from SSM via `inject_monitoring_helm_params`.
 
 ## Related Pages
 
 - [[k8s-bootstrap-pipeline]] — where Traefik is installed and configured
-- [[argocd]] — ArgoCD manages Traefik via App-of-Apps after bootstrap
+- [[helm-chart-architecture]] — IngressRoute ownership boundary; `ingress.enabled: false` in nextjs chart
+- [[argocd]] — manages Traefik DaemonSet (wave 2); IngressRoute owned by deploy.py
 - [[observability-stack]] — Prometheus scrapes Traefik; Tempo receives OTLP traces
-- [[calico]] — Calico overlay handles pod-to-pod routing after Traefik forwards requests
-- [[argo-rollouts]] — Blue/Green promotion interacts with Traefik IngressRoute
+- [[calico]] — Calico overlay handles pod-to-pod routing; NetworkPolicy dual-ipBlock for hostNetwork
+- [[argo-rollouts]] — Blue/Green promotion; preview service priority 100

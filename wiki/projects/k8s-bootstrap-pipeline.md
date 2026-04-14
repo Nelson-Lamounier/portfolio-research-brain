@@ -2,7 +2,7 @@
 title: K8s Bootstrap Pipeline
 type: project
 tags: [kubernetes, aws, cdk, step-functions, ssm, ec2, self-hosted, devops]
-sources: [raw/step-function-runtime-logging.md, raw/kubernetes_system_design_review.md]
+sources: [raw/step-function-runtime-logging.md, raw/kubernetes_system_design_review.md, raw/base-stack-review.md]
 created: 2026-04-13
 updated: 2026-04-14
 ---
@@ -15,10 +15,10 @@ A CDK-managed pipeline that bootstraps self-hosted Kubernetes clusters on EC2 us
 
 **3 nodes:** 1 control-plane EC2 + 2 ASG-backed worker pools.
 
-| Pool | Instance | Hosts |
-|---|---|---|
-| `general` | `t3.small` (Spot) | Next.js, start-admin, ArgoCD, API services |
-| `monitoring` | `t3.medium` (Spot) | [[observability-stack]], Cluster Autoscaler |
+| Pool | Instance | Min/Max | Hosts |
+|---|---|---|---|
+| `general` | `t3.medium` / `t3a.medium` (Spot) | 2/3 | Next.js, start-admin, ArgoCD, API services |
+| `monitoring` | `t3.small` / `t3a.small` (Spot) | 1/1 | [[observability-stack]], Cluster Autoscaler |
 
 ## Network Path
 
@@ -101,19 +101,31 @@ Follows [[shift-left-validation]]:
 
 ## CDK Stacks
 
-| Stack | Purpose |
-|---|---|
-| `SsmAutomation-development` | SSM Documents + Step Functions + IAM |
-| `ControlPlane-development` | EC2 control-plane + ASG |
-| `GeneralPool-development` | General worker pool ASG |
-| `MonitoringPool-development` | Monitoring worker pool ASG |
-| `AppIam-development` | IAM roles for pod workloads |
+10 stacks deployed in order. See [[cdk-kubernetes-stacks]] for the full catalogue, deployment order diagram, and lifecycle separation rationale.
+
+| # | Stack | Purpose |
+|---|---|---|
+| 1 | `KubernetesBase-development` | VPC, 4× SGs, KMS, EIP, NLB, Route 53, S3 scripts bucket, 14 SSM outputs |
+| 2 | `GoldenAmi-development` | EC2 Image Builder pipeline → Golden AMI |
+| 3 | `SsmAutomation-development` | SSM Documents + SM-A + SM-B + EventBridge + Node Drift Enforcement |
+| 4 | `K8sData-development` | App assets S3 + CDN S3 buckets |
+| 5 | `K8sApi-development` | API Gateway + Lambda + DynamoDB (subscriptions) + SES |
+| 6 | `K8sEdge-us-east-1` | CloudFront + WAF + ACM (deployed in us-east-1) |
+| 7 | `ControlPlane-development` | EC2 control-plane + ASG + lifecycle hook |
+| 8 | `AppIam-development` | Managed policies (DynamoDB, S3, Bedrock, SES) attached to worker role |
+| 9 | `GeneralPool-development` | General worker pool ASG (×1 instantiation) |
+| 9 | `MonitoringPool-development` | Monitoring worker pool ASG (×1 instantiation) |
+| 10 | `K8sObservability-development` | CloudWatch dashboards (Cluster, Bootstrap, Cost) |
 
 ## Related Pages
 
 - [[self-hosted-kubernetes]] — cluster topology, node pools, bootstrap steps
+- [[cdk-kubernetes-stacks]] — full 10-stack catalogue with deployment order diagram
 - [[aws-step-functions]] — orchestration engine
 - [[aws-ssm]] — remote execution layer
+- [[aws-cloudfront]] — edge stack (CloudFront, WAF, ACM)
+- [[aws-ebs-csi]] — storage driver for monitoring PVs
+- [[ec2-image-builder]] — Golden AMI pipeline
 - [[traefik]] — ingress controller
 - [[calico]] — CNI plugin
 - [[argocd]] — GitOps controller

@@ -2,7 +2,7 @@
 title: Disaster Recovery
 type: concept
 tags: [kubernetes, disaster-recovery, etcd, backup, s3, ssm, rto]
-sources: [raw/kubernetes_system_design_review.md]
+sources: [raw/kubernetes_system_design_review.md, raw/base-stack-review.md, raw/fix-missing-kube-proxy.md]
 created: 2026-04-14
 updated: 2026-04-14
 ---
@@ -60,10 +60,26 @@ Because `kubeadm init` is skipped on the DR path, several cluster-bootstrap obje
 
 - `cluster-info` ConfigMap
 - RBAC bindings for bootstrap tokens
-- `kube-proxy` DaemonSet
-- CoreDNS Deployment
+- `kube-proxy` DaemonSet ← **critical gap** (see below)
+- CoreDNS Deployment ← **critical gap** (see below)
 
 These are recreated idempotently via `kubeadm init phase` subcommands in the post-restore sequence before workers rejoin.
+
+### kube-proxy and CoreDNS: Addon Guards in `handle_second_run()`
+
+The production failure mode: S3 restore successfully recovers `admin.conf` **before** `kubeadm init` runs. `step_init_kubeadm()` detects `admin.conf` exists and enters `handle_second_run()`. This skips `kubeadm init` entirely — `kube-proxy` is never deployed.
+
+Without `kube-proxy`, ClusterIP routing breaks (`10.96.0.1:443` unreachable) → CCM cannot reach the API server → `uninitialized` taint stays → no pods schedule → `kubeadm join` hangs.
+
+**Fix:** Two idempotent guards added to `handle_second_run()`:
+
+```python
+# At the end of handle_second_run(), after publish_kubeconfig_to_ssm()
+ensure_kube_proxy(cfg)   # deploys via kubeadm init phase addon kube-proxy
+ensure_coredns(cfg)      # deploys via kubeadm init phase addon coredns
+```
+
+Both functions check if the resource exists first and no-op if present. Safe to run on every second-run invocation. See [[kube-proxy-missing-after-dr]] for full implementation and 6 test cases.
 
 ## CA Mismatch Handling
 
@@ -77,12 +93,35 @@ Then proceeds with the join step using the new credentials from SSM.
 
 ## EBS as State Boundary
 
-The control-plane `/data/` directory is on a separate EBS volume. The EBS volume persists across instance replacements — ASG terminates the EC2 but the EBS remains attached to the new instance. This means etcd data and certs survive as long as the EBS is healthy. The S3 backup provides a second layer for EBS failure or AZ migration.
+The control-plane `/data/` directory is on a dedicated **30 GB GP3 EBS volume** (`/dev/xvdf`) declared in the `LaunchTemplate` block-device mapping. Since `deleteOnTermination: true`, the volume is **ephemeral** — it is destroyed with the EC2 instance on replacement. State durability comes entirely from the S3 etcd snapshots (hourly `systemd` timer), not from EBS persistence.
+
+On node replacement: `control_plane.py` detects the missing data directory, downloads the latest snapshot from `s3://{scripts-bucket}/dr-backups/`, and restores before running `_reconstruct_control_plane`.
+
+## EIP Binding — NLB Not EC2
+
+The Elastic IP is permanently bound to the **NLB via SubnetMapping** — not to the EC2 control-plane instance. During DR:
+
+- The EIP address **does not change** and requires no re-association step
+- The NLB automatically routes to the new instance once health checks pass (~30 s)
+- Route 53 updates `k8s-api.k8s.internal` to the new **private IP** so workers find the new API server
+
+This design eliminates the old Lambda-based EIP re-association pattern, which required custom failover logic and was operationally fragile.
+
+## Full Cluster Rebuild (No S3 Snapshot)
+
+If the S3 snapshot is unavailable (first deployment, manual deletion, or bucket failure):
+
+1. `control_plane.py` detects no snapshot and runs `kubeadm init` from scratch
+2. New etcd is empty — application data is lost
+3. ArgoCD re-syncs all application state from Git within ~5 minutes
+4. StatefulSet data (Prometheus metrics, Loki logs, Tempo traces) is lost for the period since last snapshot
 
 ## Related Pages
 
 - [[self-hosted-kubernetes]] — bootstrap pipeline and step numbering
 - [[k8s-bootstrap-pipeline]] — SM-A triggers the DR recovery path
+- [[kube-proxy-missing-after-dr]] — DR gap: ensure_kube_proxy + ensure_coredns guards
+- [[cdk-kubernetes-stacks]] — EBS data volume design in LaunchTemplate
 - [[argocd]] — ArgoCD JWT key and TLS cert backup/restore in bootstrap sequence
 - [[observability-stack]] — monitoring PV stale cleanup on monitoring node replacement
 - [[self-healing-agent]] — autonomous recovery for non-DR incidents

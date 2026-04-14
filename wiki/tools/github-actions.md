@@ -2,7 +2,7 @@
 title: GitHub Actions
 type: tool
 tags: [ci-cd, github-actions, oidc, docker, monorepo]
-sources: [raw/step-function-runtime-logging.md]
+sources: [raw/step-function-runtime-logging.md, raw/image-cloudfront-troubleshooting-guide.md, raw/deployment_testing_guide.md]
 created: 2026-04-13
 updated: 2026-04-13
 ---
@@ -55,6 +55,43 @@ on:
       - "kubernetes-app/workloads/charts/**" # → deploy-ssm-automation.yml
 ```
 
+## Frontend Deployment Pipeline (4 Parallel Tracks)
+
+`deploy-frontend.yml` orchestrates Next.js and start-admin deployments via 4 parallel jobs that must all come from the same `${{ github.sha }}` to maintain build hash alignment:
+
+```mermaid
+flowchart TD
+    Build["build-and-push\nDocker → ECR: SHA tag"] --> S["sync-assets\nS3 upload + CloudFront invalidation"]
+    Build --> D["deploy-to-cluster\nSSM param → ArgoCD Image Updater picks up SHA"]
+    Build --> M["migrate-articles\nDynamoDB schema migration"]
+    style Build fill:#3b82f6,stroke:#2563eb,color:#fff
+    style S fill:#22c55e,stroke:#16a34a,color:#fff
+    style D fill:#6366f1,stroke:#4f46e5,color:#fff
+    style M fill:#f59e0b,stroke:#d97706,color:#fff
+```
+
+**Build alignment invariant:** The container image and S3 static assets must come from the **same build**. Next.js generates content-hashed CSS/JS filenames at build time — a mismatch causes `404` errors for all static assets. See [[nextjs-image-asset-sync]].
+
+### ArgoCD Parameter Override (self-heal safe)
+
+When `selfHeal: true` is enabled, `kubectl set image` is reverted. Use ArgoCD parameter override instead:
+
+```bash
+kubectl patch application nextjs -n argocd --type merge -p '{
+  "spec": {
+    "source": {
+      "helm": {
+        "parameters": [
+          {"name": "image.tag", "value": "<SHA_TAG>"}
+        ]
+      }
+    }
+  }
+}'
+```
+
+This modifies the ArgoCD Application spec itself (the source of truth for ArgoCD) — not the live cluster state. ArgoCD treats it as the desired state and deploys it.
+
 ## Concurrency: cancel-in-progress: false
 
 Bootstrap pipelines use `cancel-in-progress: false` because cancelling a mid-flight `kubeadm init` Step Functions execution would leave the cluster in an undefined state. Queued > cancelled.
@@ -64,3 +101,5 @@ Bootstrap pipelines use `cancel-in-progress: false` because cancelling a mid-fli
 - [[k8s-bootstrap-pipeline]] — project context
 - [[aws-step-functions]] — triggered by GHA phases
 - [[shift-left-validation]] — local tests before CI
+- [[nextjs-image-asset-sync]] — build hash alignment; parallel track dependency; ArgoCD override
+- [[argo-rollouts]] — BlueGreen deployment triggered by Image Updater after pipeline

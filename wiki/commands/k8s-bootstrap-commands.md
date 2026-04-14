@@ -175,6 +175,7 @@ ls -la /data/app-deploy/admin-api/
 
 ## Related Pages
 
+- [[kubectl-operations]] — day-2 cluster operations: exec, rollout, logs, ArgoCD+kubectl cycle, JSONPath, Grafana debugging
 - [[just]] — task runner details
 - [[aws-ssm]] — SSM execution model
 - [[shift-left-validation]] — the testing workflow these commands implement
