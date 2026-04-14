@@ -48,6 +48,24 @@ type: log
 - Updated: `portfolio-doc/.gitignore` — excludes generated wiki pages and manifest
 - Verified: build passes with 15 wiki pages rendered; navigation auto-generated with 7 sections
 
+## [2026-04-14] ingest | Kubernetes Self-Healing System — System Design Review
+- Source: `raw/kubernetes_system_design_review.md`
+- Comprehensive system design review covering the full portfolio infrastructure: cluster topology, networking, API services, progressive delivery, observability, DR, and self-healing agent
+- Pages created (7):
+  - `wiki/concepts/self-healing-agent.md` — CloudWatch → EventBridge → Lambda → Bedrock ConverseCommand loop → MCP Gateway → SNS; FinOps observability
+  - `wiki/tools/traefik.md` — DaemonSet + hostNetwork design, TLS boundary, Prometheus metrics, OTLP traces, PDB disabled (ArgoCD v3 bug)
+  - `wiki/tools/argo-rollouts.md` — Blue/Green strategy, manual gate, Prometheus AnalysisTemplate, N-1 static asset retention
+  - `wiki/concepts/observability-stack.md` — LGTM + Alloy, monitoring pool isolation, Traefik → Tempo traces, EBS PV lifecycle
+  - `wiki/concepts/disaster-recovery.md` — backup matrix (etcd/PKI → S3, TLS/JWT → SSM), _reconstruct_control_plane, RTO 5–8 min
+  - `wiki/patterns/bff-pattern.md` — pod-to-pod admin calls, CORS as defence-in-depth
+  - `wiki/tools/hono.md` — public-api (port 3001) and admin-api (port 3002), IMDS credentials, DynamoDB GSI pattern, FinOps routes
+- Pages updated (4):
+  - `wiki/concepts/self-hosted-kubernetes.md` — added worker pool parameterization, cluster topology table, CA mismatch detection, stale PV cleanup, Cluster Autoscaler IAM split
+  - `wiki/tools/argocd.md` — added App-of-Apps structure, 41-step bootstrap sequence, JWT key continuity, Image Updater, ignoreDifferences
+  - `wiki/projects/k8s-bootstrap-pipeline.md` — added network path diagram, in-cluster services table, BFF and Argo Rollouts design decisions
+  - `wiki/tools/aws-ssm.md` — added SSM over Fn::ImportValue design decision, DR SecureString parameters
+- Updated: index.md
+
 ## [2026-04-14] analysis | LLM Wiki vs Bedrock Pipeline — System Design Review
 - Created: `wiki/comparisons/llm-wiki-vs-bedrock-pipeline.md`
 - Comparative analysis of LLM Wiki (interlinked synthesis) vs Bedrock article pipeline (automated delivery)
