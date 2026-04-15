@@ -118,13 +118,25 @@ def build_portfolio_frontmatter(fm: dict, body: str) -> str:
 
 _WIKILINK_RE = re.compile(r'\[\[([^\]]+)\]\]')
 
+def path_to_slug(rel: str) -> str:
+    """
+    Convert a relative wiki path to a URL slug.
+    Mirrors the JS pathToSlug() in fetch-wiki.mjs so local and CI agree.
+
+      "tools/argocd.md"           → "tools-argocd"
+      "ai-engineering/chatbot.md" → "ai-engineering-chatbot"
+      "argocd.md"                 → "argocd"  (root-level, no subdirectory)
+    """
+    return re.sub(r'\.md$', '', rel).replace("/", "-").replace("\\", "-")
+
+
 def transform_wikilinks(content: str) -> str:
     """
     Replace Obsidian wikilinks with Markdoc-compatible markdown links.
 
-      [[page-name]]            → [page-name](/docs/page-name)
-      [[category/page-name]]   → [page-name](/docs/page-name)   (path flattened)
-      [[page-name|display]]    → [display](/docs/page-name)
+      [[tools/argocd]]          → [argocd](/docs/tools-argocd)
+      [[argocd]]                → [argocd](/docs/argocd)
+      [[tools/argocd|Argo CD]]  → [Argo CD](/docs/tools-argocd)
     """
     def _replace(match: re.Match) -> str:
         inner = match.group(1)
@@ -134,9 +146,13 @@ def transform_wikilinks(content: str) -> str:
             display = display.strip()
         else:
             target = inner.strip()
-            display = target.split("/")[-1]   # use basename as default label
+            display = target.split("/")[-1]   # basename as default label
 
-        slug = target.split("/")[-1]           # flatten: drop subdirectory prefix
+        # Path-qualified → join with "-"; bare name → use as-is
+        if "/" in target:
+            slug = target.replace("/", "-")
+        else:
+            slug = target
         return f"[{display}](/docs/{slug})"
 
     return _WIKILINK_RE.sub(_replace, content)
@@ -205,11 +221,14 @@ def parse_navigation() -> list[dict]:
             for link_match in _LINK_RE.finditer(part):
                 target = link_match.group(1).strip()
                 description = (link_match.group(2) or "").strip()
-                slug = target.split("/")[-1]
-                # kebab-case → Title Case display name
+                # Path-based slug: [[tools/argocd]] → "tools-argocd"
+                # mirrors path_to_slug() and fetch-wiki.mjs pathToSlug()
+                slug = target.replace("/", "-")
+                # Title uses basename only for readability in nav
+                basename = target.split("/")[-1]
                 display_title = " ".join(
                     w.capitalize() if w.lower() not in ("and", "or", "of", "the", "vs") else w
-                    for w in slug.split("-")
+                    for w in basename.split("-")
                 )
                 sections[-1]["links"].append({
                     "title": display_title,
@@ -271,11 +290,13 @@ def main():
             _upload_json(f"{kb_key}.metadata.json", build_metadata_json(fm, category))
             stats["kb"] += 1
 
-            # ── Portfolio-doc: transformed page (flat slug) ────────────────
+            # ── Portfolio-doc: transformed page (path-preserving key) ────────
+            # Key mirrors wiki/ subdirectory: portfolio-docs/tools/argocd.md
+            # fetch-wiki.mjs derives slug via pathToSlug(key) = "tools-argocd"
             transformed_body    = transform_wikilinks(body)
             portfolio_fm_str    = build_portfolio_frontmatter(fm, body)
             portfolio_content   = portfolio_fm_str + transformed_body
-            portfolio_key       = f"{PORTFOLIO_PREFIX}/{slug}.md"
+            portfolio_key       = f"{PORTFOLIO_PREFIX}/{rel}"
             _upload(portfolio_key, portfolio_content, "text/markdown; charset=utf-8")
             stats["portfolio"] += 1
 

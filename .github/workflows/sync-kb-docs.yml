@@ -19,6 +19,7 @@ on:
     paths:
       - "wiki/**"
       - "index.md"
+      - "articles-draft/**"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -50,6 +51,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # needed for git diff HEAD~1
+
+      # -----------------------------------------------------------------
+      # Detect article slug: from dispatch input OR from changed files
+      # -----------------------------------------------------------------
+      - name: Detect article slug
+        id: detect-slug
+        env:
+          INPUT_SLUG: ${{ inputs.article-slug }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          SLUG=""
+          if [ -n "${INPUT_SLUG}" ]; then
+            SLUG="${INPUT_SLUG}"
+          elif [ "${EVENT_NAME}" = "push" ]; then
+            CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'articles-draft/*.md' | head -1)
+            if [ -n "${CHANGED}" ]; then
+              SLUG=$(basename "${CHANGED}" .md)
+            fi
+          fi
+          if [ -n "${SLUG}" ]; then
+            echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
+            echo "has-slug=true" >> "$GITHUB_OUTPUT"
+            echo "Article slug detected: ${SLUG}"
+          else
+            echo "has-slug=false" >> "$GITHUB_OUTPUT"
+            echo "No article slug — upload step will be skipped."
+          fi
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -190,12 +220,15 @@ jobs:
 
       # -----------------------------------------------------------------
       # Step 4: Optional — upload article brief for KB-augmented generation
+      # Runs when a slug is detected — either from workflow_dispatch input
+      # or from a pushed change inside articles-draft/
       # -----------------------------------------------------------------
       - name: Upload article brief to S3
-        if: github.event_name == 'workflow_dispatch' && inputs.article-slug != ''
+        if: steps.detect-slug.outputs.has-slug == 'true' && inputs.dry_run != 'true'
+        env:
+          SLUG: ${{ steps.detect-slug.outputs.slug }}
+          BUCKET_NAME: ${{ steps.sync.outputs.bucket-name }}
         run: |
-          SLUG="${{ inputs.article-slug }}"
-          BUCKET_NAME="${{ steps.sync.outputs.bucket-name }}"
           BRIEF="articles-draft/${SLUG}.md"
 
           if [ ! -f "${BRIEF}" ]; then
@@ -208,6 +241,20 @@ jobs:
           echo "Uploading brief: ${BRIEF} ($(wc -c < "${BRIEF}" | tr -d ' ') bytes)"
           aws s3 cp "${BRIEF}" "s3://${BUCKET_NAME}/drafts/${SLUG}.md"
           echo "✅ Brief uploaded — Lambda should trigger shortly"
+
+      # -----------------------------------------------------------------
+      # Step 5: Trigger portfolio-doc rebuild
+      # Requires: PORTFOLIO_DOC_DEPLOY_TOKEN secret — PAT with
+      # repo scope on Nelson-Lamounier/portfolio-doc
+      # -----------------------------------------------------------------
+      - name: Trigger portfolio-doc rebuild
+        if: inputs.dry_run != 'true'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PORTFOLIO_DOC_DEPLOY_TOKEN }}
+          repository: Nelson-Lamounier/portfolio-doc
+          event-type: wiki-updated
+          client-payload: '{"sha": "${{ github.sha }}"}'
 
       # -----------------------------------------------------------------
       # Step summary
