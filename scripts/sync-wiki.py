@@ -165,7 +165,8 @@ def transform_wikilinks(content: str) -> str:
 def build_metadata_json(fm: dict, category: str) -> dict:
     """
     Build a Bedrock Knowledge Base .metadata.json sidecar.
-    Bedrock uses this for metadata filtering on RetrieveCommand calls.
+    Format: flat key-value pairs under metadataAttributes.
+    (The typed wrapper format is only valid in RetrieveCommand filters, not sidecars.)
     """
     tags = fm.get("tags", [])
     if isinstance(tags, str):
@@ -173,11 +174,11 @@ def build_metadata_json(fm: dict, category: str) -> dict:
 
     return {
         "metadataAttributes": {
-            "type":     {"value": {"stringValue": fm.get("type", "")},     "type": "STRING"},
-            "title":    {"value": {"stringValue": fm.get("title", "")},    "type": "STRING"},
-            "category": {"value": {"stringValue": category},               "type": "STRING"},
-            "tags":     {"value": {"stringListValue": tags},               "type": "STRING_LIST"},
-            "updated":  {"value": {"stringValue": str(fm.get("updated", ""))}, "type": "STRING"},
+            "type":     fm.get("type", ""),
+            "title":    fm.get("title", ""),
+            "category": category,
+            "tags":     tags,
+            "updated":  str(fm.get("updated", "")),
         }
     }
 

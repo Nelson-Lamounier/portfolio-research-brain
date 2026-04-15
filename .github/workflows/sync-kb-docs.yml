@@ -166,6 +166,13 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r scripts/requirements.txt
 
+      # Bedrock KB sidecars must use flat key-value metadataAttributes.
+      # The typed-wrapper format ({"value": {"stringValue": ...}, "type": "STRING"})
+      # is only valid in RetrieveCommand filters — Bedrock rejects it in sidecar
+      # files. Fail here before any S3 upload to surface the error early.
+      - name: Validate metadata sidecar schema
+        run: python3 scripts/validate-metadata.py
+
       - name: Sync wiki to S3
         id: sync
         env:
