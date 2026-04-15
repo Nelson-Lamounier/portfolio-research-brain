@@ -171,6 +171,8 @@ jobs:
       # is only valid in RetrieveCommand filters — Bedrock rejects it in sidecar
       # files. Fail here before any S3 upload to surface the error early.
       - name: Validate metadata sidecar schema
+        env:
+          DRY_RUN: "1"
         run: python3 scripts/validate-metadata.py
 
       - name: Sync wiki to S3
