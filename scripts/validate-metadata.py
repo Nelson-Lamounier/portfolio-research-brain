@@ -49,10 +49,10 @@ for page in sorted(WIKI_DIR.rglob("*.md")):
             + ", ".join(f"{k}" for k in bad)
         )
 
-    # Rule 2: tags must be a list
-    tags = attrs.get("tags", [])
-    if not isinstance(tags, list):
-        errors.append(f"{rel}: 'tags' must be list, got {type(tags).__name__}")
+    # Rule 2: tags must be a comma-separated string (Bedrock rejects list values)
+    tags = attrs.get("tags", "")
+    if not isinstance(tags, str):
+        errors.append(f"{rel}: 'tags' must be a comma-separated string, got {type(tags).__name__}")
 
     # Rule 3: required keys present
     for key in ("type", "title", "category"):

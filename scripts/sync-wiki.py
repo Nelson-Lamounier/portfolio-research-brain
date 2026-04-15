@@ -177,7 +177,7 @@ def build_metadata_json(fm: dict, category: str) -> dict:
             "type":     fm.get("type", ""),
             "title":    fm.get("title", ""),
             "category": category,
-            "tags":     tags,
+            "tags":     ",".join(tags),   # Bedrock only accepts strings, numbers, booleans — not lists
             "updated":  str(fm.get("updated", "")),
         }
     }
