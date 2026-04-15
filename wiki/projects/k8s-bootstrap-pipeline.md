@@ -17,8 +17,8 @@ A CDK-managed pipeline that bootstraps self-hosted Kubernetes clusters on EC2 us
 
 | Pool | Instance | Min/Max | Hosts |
 |---|---|---|---|
-| `general` | `t3.medium` / `t3a.medium` (Spot) | 2/3 | Next.js, start-admin, ArgoCD, API services |
-| `monitoring` | `t3.small` / `t3a.small` (Spot) | 1/1 | [[observability-stack]], Cluster Autoscaler |
+| `general` | `t3.medium` / `t3a.medium` (Spot) | 2/3 | Next.js, start-admin, public-api, admin-api |
+| `monitoring` | `t3.medium` / `t3a.medium` (Spot) | 1/1 | [[observability-stack]], Cluster Autoscaler, ArgoCD |
 
 ## Network Path
 
@@ -83,8 +83,14 @@ SM-A SUCCEED → EventBridge rule → SM-B fires automatically. Any EC2 replacem
 
 ## Testing Workflow
 
-Follows [[shift-left-validation]]:
+Follows [[shift-left-validation]] and [[infra-testing-strategy]]:
 
+**CDK infrastructure testing** (50 test files, ~8,000 lines TypeScript):
+- 32 unit tests — `Template.fromStack` in-memory, no AWS credentials, parallel, ~15s total
+- 16 integration tests — real AWS SDK, SSM-anchored, 60s timeout, sequential, post-deploy only
+- CI: `just test-stacks` in `ci.yml`; integration gates embedded in [[ci-cd-pipeline-architecture]] after every CDK deploy
+
+**Script testing**:
 1. `just deploy-test <script>` — offline unit tests (< 5s)
 2. `just deploy-sync <script>` → `just ssm-shell` → `--dry-run` — live node validation (< 30s)
 3. `just deploy-script <script>` — SSM document trigger with CloudWatch tail (< 1min)
@@ -134,8 +140,15 @@ Follows [[shift-left-validation]]:
 - [[self-healing-agent]] — AI-driven incident remediation
 - [[disaster-recovery]] — etcd backup and control-plane DR
 - [[hono]] — public-api and admin-api services
+- [[frontend-portfolio]] — frontend monorepo (Next.js 15 + TanStack Start) running on this cluster
+- [[nextjs]] — Next.js 15 `apps/site` implementation
+- [[tanstack-start]] — TanStack Start `apps/start-admin` implementation
 - [[bff-pattern]] — admin-api access pattern
 - [[shift-left-validation]] — testing philosophy
+- [[infra-testing-strategy]] — CDK testing pyramid (unit + integration)
+- [[ci-cd-pipeline-architecture]] — 26-workflow CI/CD architecture
+- [[checkov]] — IaC security scanning in CI pipeline
+- [[aws-devops-certification-connections]] — how this project maps to DOP-C02 domains
 - [[event-driven-orchestration]] — SM-A → EventBridge → SM-B
 - [[ssm-permission-denied]] — /data/app-deploy/ permissions fix
 - [[k8s-bootstrap-commands]] — all just recipes and CLI commands

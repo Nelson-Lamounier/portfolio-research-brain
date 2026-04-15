@@ -1,10 +1,10 @@
 ---
 title: Shift-Left Validation
 type: concept
-tags: [devops, testing, shift-left, ci-cd, developer-experience]
-sources: [raw/step-function-runtime-logging.md]
+tags: [devops, testing, shift-left, ci-cd, developer-experience, cdk, jest]
+sources: [raw/step-function-runtime-logging.md, raw/infra_tests_architecture_review.md]
 created: 2026-04-13
-updated: 2026-04-13
+updated: 2026-04-14
 ---
 
 # Shift-Left Validation
@@ -64,8 +64,33 @@ CDK-managed resources (SSM Documents, Step Functions, IAM) are immutable — rep
 
 `deploy-sync` exploits this boundary: push a new `deploy.py` to S3 in 10 seconds and test immediately, without touching CloudFormation.
 
+## CDK Infrastructure Testing Tier
+
+The same shift-left philosophy applies to CDK infrastructure changes. The [[infra-testing-strategy]] describes the full testing pyramid:
+
+```mermaid
+flowchart LR
+    U["CDK unit test\nTemplate.fromStack\n&lt;1s, no AWS"] --> I["CDK integration test\nReal AWS SDK\n30–60s, post-deploy"]
+    I --> P["Production deploy"]
+    style U fill:#22c55e,color:#fff
+    style I fill:#3b82f6,color:#fff
+    style P fill:#ef4444,color:#fff
+```
+
+**Unit tests catch before CI**: a missing SSM parameter output in a CDK stack is caught by `Template.fromStack` assertions in <1s — not after a 5–15 min `cdk deploy`. A misconfigured Security Group rule is caught in the same test run.
+
+**Integration test gates in the deploy pipeline**: [[ci-cd-pipeline-architecture]] embeds an `_integration-tests.yml` call after every CDK stack deployment. A stack that deploys successfully but leaves resources broken fails the integration gate before downstream stacks run.
+
+**Key patterns**:
+- `Template.fromStack` + `Match.objectLike` — validates semantically meaningful properties without brittle snapshot pinning
+- `describe.each` — runs the same assertions against both worker pool configurations
+- `it.todo()` — structured technical debt: yellow in CI, not hidden
+- Negative assertions (`expect(stackMap).not.toHaveProperty('worker')`) — verify decommissioned resources stay gone
+
 ## Related Pages
 
 - [[k8s-bootstrap-pipeline]] — project applying this concept
+- [[infra-testing-strategy]] — the CDK testing pyramid in full detail
+- [[ci-cd-pipeline-architecture]] — pipeline with integration test gates after every CDK deploy
 - [[just]] — task runner implementing these gates
 - [[k8s-bootstrap-commands]] — the specific commands

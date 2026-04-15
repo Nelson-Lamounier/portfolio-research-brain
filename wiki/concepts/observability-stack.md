@@ -2,9 +2,9 @@
 title: Observability Stack
 type: concept
 tags: [kubernetes, observability, prometheus, loki, tempo, grafana, alloy, promtail, monitoring]
-sources: [raw/kubernetes_system_design_review.md, raw/base-stack-review.md, raw/kubernetes_observability_report.md, raw/prometheus-targets-troubleshooting.md, raw/monitoring-strategy-review.md, raw/rum-dashboard-review.md]
+sources: [raw/kubernetes_system_design_review.md, raw/base-stack-review.md, raw/kubernetes_observability_report.md, raw/prometheus-targets-troubleshooting.md, raw/monitoring-strategy-review.md, raw/rum-dashboard-review.md, raw/system_design_review.md]
 created: 2026-04-14
-updated: 2026-04-14
+updated: 2026-04-15
 ---
 
 # Observability Stack
@@ -192,12 +192,23 @@ See [[promtail]] for full configuration detail.
 
 Alloy is **not** a log shipper or metrics collector — that role belongs to Promtail and node-exporter. Alloy is a **single-pod Deployment** that acts as a protocol translator for browser-side telemetry.
 
-The Next.js application embeds the **Grafana Faro SDK** which collects:
+Both [[nextjs|apps/site]] and [[tanstack-start|apps/start-admin]] embed the **Grafana Faro SDK** which collects:
 - Core Web Vitals (LCP, INP, CLS, FCP, TTFB)
 - JavaScript exceptions
 - User session spans
 
-The browser POSTs this data to `https://ops.nelsonlamounier.com/faro/api/v1/push` → NLB → Traefik → `alloy.monitoring:12347`. The Faro IngressRoute uses a `StripPrefix` middleware to strip the `/faro` prefix before the request reaches the Alloy receiver. Alloy splits the payload by signal type and fans out:
+**`apps/site` — `/log-proxy` rewrite pattern:** The Next.js pod rewrites `GET/POST /log-proxy/*` to the Alloy Faro receiver URL. The browser POSTs to `https://nelsonlamounier.com/log-proxy/...` (same origin) — Next.js forwards it server-side to Alloy. This sidesteps the CORS restriction that would block a direct `browser → alloy.monitoring` call.
+
+```js
+// next.config.js
+async rewrites() {
+  return [{ source: '/log-proxy/:path*', destination: `${ALLOY_FARO_URL}/:path*` }]
+}
+```
+
+**`apps/start-admin` — direct Faro SDK:** The admin app uses the standard Faro SDK without the proxy rewrite; Alloy is configured with CORS allowlist for the admin origin.
+
+The Faro IngressRoute uses a `StripPrefix` middleware to strip the `/faro` prefix before the request reaches the Alloy receiver. Alloy splits the payload by signal type and fans out:
 - **Measurements/errors → Loki** (labelled `job="faro"`)
 - **Spans → Tempo** (via OTLP gRPC)
 
@@ -329,33 +340,37 @@ ConfigMaps mount as a `projected` volume. Grafana auto-reloads every 60 seconds 
 
 ### Grafana Alerting
 
-All alerting rules, contact points, and routing are defined in the `grafana-alerting` ConfigMap — versioned in Git, survive pod restarts.
+All alerting rules, contact points, and routing are defined in the `grafana-alerting` ConfigMap — versioned in Git, survive pod restarts. Three files: `contactpoints.yaml`, `policies.yaml`, `rules.yaml`.
 
-**Contact point:** AWS SNS topic (ARN injected at Helm deploy time from `values.yaml`). Fans out to email/Slack/Lambda from a single topic.
+**Contact point:** AWS SNS topic ARN injected at Helm deploy time via bootstrap Step 5b (`inject_monitoring_helm_params`). The SNS topic default in `values.yaml` is `""` (silent mode) until the bootstrap pipeline overwrites it. Both alert and recovery messages are delivered (`disableResolveMessage: false`).
 
-**Alert groups:**
+**Alert groups — 4 groups, 12 rules:**
 
-| Group | Alert | Condition |
-|---|---|---|
-| Cluster Health | Node Down | `up{job="node-exporter"} < 1` for 2m |
-| Cluster Health | High Node CPU | avg CPU > 85% for 5m |
-| Cluster Health | Pod CrashLooping | > 3 restarts in 15m (immediate) |
-| Application Health | High Error Rate | > 5% 5xx errors for 5m |
-| Application Health | High P95 Latency | P95 > 2s for 5m |
-| Storage Health | Disk Space Low | > 80% usage for 5m |
-| Storage Health | Disk Space Critical | > 90% usage for 2m |
-| DynamoDB & Tracing | DynamoDB Error Rate | > 5% from span-metrics for 5m |
-| DynamoDB & Tracing | **Span Ingestion Stopped** | `rate(traces_spanmetrics_calls_total[5m]) < 0.001` for 10m |
+| Group | Alert | Key condition | `for` | Severity |
+|---|---|---|---|---|
+| Cluster Health | Node Down | `up{job="node-exporter"} < 1` | 2m | critical |
+| Cluster Health | High CPU / Memory | avg > 85% | 5m | warning |
+| Cluster Health | Pod CrashLooping | > 3 restarts / 15m | **0s** | critical |
+| Cluster Health | Pod Not Ready | `kube_pod_status_ready == 0` | 5m | warning |
+| Application Health | High Error Rate | > 5% 5xx errors | 5m | critical |
+| Application Health | High P95 Latency | P95 > 2s | 5m | warning |
+| Storage Health | Disk Low / Critical | > 80% / > 90% | 5m / 2m | warning / critical |
+| DynamoDB & Tracing | DynamoDB Error Rate | `traces_spanmetrics_*` > 5% | 5m | critical |
+| DynamoDB & Tracing | DynamoDB P95 Latency | `traces_spanmetrics_*` > 1s | 5m | warning |
+| DynamoDB & Tracing | **Span Ingestion Stopped** | `rate(traces_spanmetrics_calls_total[5m]) < 0.001` | 10m | critical |
 
-The **Span Ingestion Stopped** alert guards against the silent failure mode where everything looks fine in metrics but traces have stopped flowing (OTel SDK crash, network partition, Tempo restart).
+**DynamoDB alerts use `traces_spanmetrics_*` metrics** — generated by Tempo's SpanMetrics pipeline from OTel spans. DynamoDB has no native Prometheus endpoint; this is the only way to get PromQL-addressable DynamoDB metrics without CloudWatch.
+
+**Span Ingestion Stopped** is a meta-alert on the observability pipeline itself — prevents "everything looks fine because we stopped receiving data."
+
+**`for: 0s` on Pod CrashLooping** vs **`for: 2m` on Node Down**: restart counters are monotonically increasing (no false positive form); `up` can briefly flip on Prometheus restart. Different signal types warrant different debounce strategies.
+
+**All rules use A→B→C evaluation** (PromQL → Reduce `last` → Threshold) — required by Grafana Unified Alerting's expression pipeline. See [[notification-architecture]] for the full rule catalogue and routing policy.
 
 **Known alerting gaps:**
-- `for: 0s` on Pod CrashLooping — fires immediately on first detection; may produce noise during normal rollouts; `for: 1m` would reduce false positives
-- No inhibition rules — if Node Down fires, all pod-level alerts on that node also fire independently (alert storm)
-- `repeat_interval: 4h` may be too infrequent for critical alerts
-- No Grafana health alert — if Grafana itself goes down, there is no external check to fire
-
-All alerting configuration is in the `grafana-alerting` ConfigMap and is GitOps-managed — changes require a Git commit + ArgoCD sync.
+- No inhibition rules — Node Down fires independently from all pod-level alerts on that node
+- No CloudWatch Alarm on `SNSNumberOfNotificationsFailed` — silent delivery failures would make all alerts invisible
+- No Grafana health alert — if Grafana itself goes down, there is no external watchdog
 
 ---
 
@@ -392,6 +407,24 @@ persistentvolumeclaims: "6"
 ```
 
 Actual sum across all 11 monitoring services: ~850m CPU, ~1.5Gi memory — comfortably within the 1500m / 2Gi request budget on the monitoring `t3.small` (2 vCPU, 2Gi RAM in dev configuration). The 6 PVC slots cover Prometheus, Grafana, Loki, Tempo (4 EBS volumes) plus 2 spare.
+
+---
+
+## Application-Level Metrics (prom-client)
+
+[[nextjs|apps/site]] exposes a `/api/metrics` endpoint scraped by Prometheus alongside the infrastructure jobs:
+
+| Metric | Type | Description |
+|---|---|---|
+| `http_request_duration_seconds` | Histogram | Per-route request latency |
+| `http_request_size_bytes` | Histogram | Request body sizes |
+| `aws_api_calls_total` | Counter | AWS SDK call counts by service/operation |
+
+**Auth:** The endpoint requires a Bearer token fetched from SSM at runtime (5-minute in-process cache, 60-second backoff on failure). The token is seeded by `deploy-nextjs-secrets.ts` during CI/CD.
+
+**Cold-start caveat:** The token cache is empty on pod restart. The first Prometheus scrape after a restart may fail with 401 if SSM responds slowly — not a data loss issue (Prometheus marks the scrape as failed and retries), but can create a gap in the `scrape_duration_seconds` metric.
+
+[[tanstack-start|apps/start-admin]] does **not** expose a Prometheus endpoint — admin pod resource usage is covered by node-exporter at the host level.
 
 ---
 
@@ -494,6 +527,7 @@ See [[hono]] for implementation details.
 - [[promtail]] — DaemonSet log shipper; kubernetes-pods + journal scrape jobs
 - [[aws-ebs-csi]] — storage driver; `ebs-sc` StorageClass; migration from local-path
 - [[steampipe]] — cloud inventory SQL tool; Grafana datasource; debugging workflow
+- [[notification-architecture]] — full notification system: 3 planes (Grafana/CloudWatch/ArgoCD), 5 SNS topics, 12 alert rules, ArgoCD GitHub commit status
 - [[self-healing-agent]] — reacts to CloudWatch alarms from this stack; publishes to SNS
 - [[traefik]] — ships OTLP traces; exposes monitoring services via IngressRoute
 - [[self-hosted-kubernetes]] — monitoring pool node design and PV cleanup

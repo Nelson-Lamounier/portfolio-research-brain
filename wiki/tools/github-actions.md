@@ -1,10 +1,10 @@
 ---
 title: GitHub Actions
 type: tool
-tags: [ci-cd, github-actions, oidc, docker, monorepo]
-sources: [raw/step-function-runtime-logging.md, raw/image-cloudfront-troubleshooting-guide.md, raw/deployment_testing_guide.md]
+tags: [ci-cd, github-actions, oidc, docker, monorepo, security, typescript]
+sources: [raw/step-function-runtime-logging.md, raw/image-cloudfront-troubleshooting-guide.md, raw/deployment_testing_guide.md, raw/devops_cicd_architecture_review.md]
 created: 2026-04-13
-updated: 2026-04-13
+updated: 2026-04-14
 ---
 
 # GitHub Actions
@@ -92,14 +92,43 @@ kubectl patch application nextjs -n argocd --type merge -p '{
 
 This modifies the ArgoCD Application spec itself (the source of truth for ArgoCD) — not the live cluster state. ArgoCD treats it as the desired state and deploys it.
 
-## Concurrency: cancel-in-progress: false
+## Concurrency: App vs Infra Pipelines
 
-Bootstrap pipelines use `cancel-in-progress: false` because cancelling a mid-flight `kubeadm init` Step Functions execution would leave the cluster in an undefined state. Queued > cancelled.
+| Pipeline type | `cancel-in-progress` | Reason |
+|---|---|---|
+| App pipelines (frontend, api) | `true` | Latest commit wins; stale deploy is useless |
+| Infra pipelines (CDK, SSM automation) | `false` | Mid-flight CloudFormation or `kubeadm init` must complete; cancellation leaves cluster in unknown state |
+
+## Security Hardening
+
+**Immutable image tags**: `${github.sha}-r${github.run_attempt}` — prevents ECR tag overwrite with stale layers across retries.
+
+**Pinned action SHA versions**: All marketplace actions pinned to a commit SHA (`@de0fac2e4500...`), not a version tag. Version tags are mutable; SHA pins are not. A `# v4.1.0` comment preserves readability.
+
+**AROA masking**: The custom `_configure-aws.yml` reusable workflow masks the IAM role's internal unique identifier (AROA) in all logs — prevents IAM reconnaissance via CloudTrail cross-reference. Standard OIDC credential federation does not do this.
+
+## TypeScript Scripting Layer
+
+All non-trivial CI logic lives in typed TypeScript scripts rather than inline Bash (`infra/scripts/ci/`):
+
+| Script | Purpose |
+|---|---|
+| `pipeline-setup.ts` | Commit metadata, AWS account validation, AROA mask, SSM → CDK context |
+| `preflight-checks.ts` | Account ID regex, region regex, CDK bootstrap verification |
+| `synthesize.ts` | Single CDK synth → `cdk.out/` artifact + stack name outputs |
+| `security-scan.ts` | Checkov orchestration, severity gating, SARIF output |
+
+Key advantage over Bash: `JSON.stringify()` handles commit messages with special characters and newlines — Bash heredoc quoting is fragile on edge cases.
+
+See [[ci-cd-pipeline-architecture]] for the full 26-workflow architecture.
 
 ## Related Pages
 
 - [[k8s-bootstrap-pipeline]] — project context
+- [[ci-cd-pipeline-architecture]] — full 26-workflow architecture, TypeScript scripting layer, security model
 - [[aws-step-functions]] — triggered by GHA phases
 - [[shift-left-validation]] — local tests before CI
+- [[infra-testing-strategy]] — CDK testing pyramid run by CI
+- [[checkov]] — IaC security scanning run by security-scan.ts
 - [[nextjs-image-asset-sync]] — build hash alignment; parallel track dependency; ArgoCD override
 - [[argo-rollouts]] — BlueGreen deployment triggered by Image Updater after pipeline

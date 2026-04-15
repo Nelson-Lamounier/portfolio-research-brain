@@ -4,7 +4,7 @@ This is a personal knowledge base built on the **LLM Wiki** pattern. The LLM rea
 
 ## Domain
 
-DevOps, System Design, Software Engineering — drawn from real project implementations. The wiki serves three downstream uses:
+DevOps, System Design, Software Engineering, **AI Engineering** — drawn from real project implementations. The wiki serves three downstream uses:
 
 1. **Portfolio articles** — polished content for public consumption
 2. **Chatbot Q&A** — a queryable knowledge base on a portfolio site
@@ -41,7 +41,8 @@ wiki/
 ├── patterns/          # design & architectural patterns (e.g., circuit-breaker.md, cqrs.md)
 ├── troubleshooting/   # problem → diagnosis → solution pages
 ├── commands/          # executable command references grouped by tool or workflow
-└── comparisons/       # side-by-side analyses (e.g., ecs-vs-eks.md)
+├── comparisons/       # side-by-side analyses (e.g., ecs-vs-eks.md)
+└── ai-engineering/    # LLM system design, inference-time techniques, prompt engineering, RAG patterns
 ```
 
 ### Layer 3: This File (`CLAUDE.md`)

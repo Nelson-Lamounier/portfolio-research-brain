@@ -2,9 +2,9 @@
 title: ArgoCD
 type: tool
 tags: [kubernetes, gitops, argocd, continuous-delivery]
-sources: [raw/step-function-runtime-logging.md, raw/kubernetes_system_design_review.md, raw/base-stack-review.md, raw/kubernetes_app_review.md]
+sources: [raw/step-function-runtime-logging.md, raw/kubernetes_system_design_review.md, raw/base-stack-review.md, raw/kubernetes_app_review.md, raw/notification_implementation_review.md]
 created: 2026-04-13
-updated: 2026-04-14
+updated: 2026-04-15
 ---
 
 # ArgoCD
@@ -180,11 +180,29 @@ Without this, ArgoCD would revert these runtime-injected values on every sync, b
 
 `bootstrap-run` uses `AWS-RunShellScript` directly — it does **not** trigger EventBridge or SM-B. Use SM-A for anything requiring kubeadm, worker rejoin, or the self-healing chain.
 
+## ArgoCD Notifications
+
+The notifications controller (bundled with ArgoCD ≥2.6) is deployed at sync-wave 4 as a self-managing application. It posts **GitHub commit status updates** for every application sync and health event, providing deployment traceability directly in the Git repository.
+
+**Authentication**: GitHub App (not a PAT token) — credentials stored as SSM SecureStrings and injected into the `argocd-notifications-secret` Kubernetes Secret by bootstrap Step 5e (`provision_argocd_notifications_secret` in `steps/apps.py`).
+
+**`defaultTriggers`** applies to all ArgoCD Applications without per-application annotation:
+- `on-sync-succeeded` → GitHub `success` status
+- `on-sync-failed` → GitHub `failure` status
+- `on-health-degraded` → GitHub `failure` status
+
+Status label: `argocd/<app-name>` — visible in GitHub PR merge protection rules for all 10 applications.
+
+**Bootstrap Step 5e is non-fatal**: if the SSM parameters are not yet populated, bootstrap continues with a warning. Re-running `bootstrap_argocd.py` after storing credentials completes the setup.
+
+See [[notification-architecture]] for the full notifications architecture including the 5 SNS topics and 12 Grafana alert rules.
+
 ## Related Pages
 
 - [[k8s-bootstrap-pipeline]] — project context
 - [[self-hosted-kubernetes]] — where ArgoCD fits in the bootstrap sequence
 - [[helm-chart-architecture]] — Helm chart design, ApplicationSet, golden-path template
+- [[notification-architecture]] — ArgoCD Notifications details + 3 notification planes + 12 Grafana alert rules
 - [[aws-ebs-csi]] — EBS CSI Driver deployed at Sync Wave 4
 - [[crossplane]] — Crossplane managed at waves 4/5/6
 - [[event-driven-orchestration]] — SM-A → EventBridge → SM-B pattern

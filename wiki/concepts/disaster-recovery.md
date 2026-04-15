@@ -81,6 +81,16 @@ ensure_coredns(cfg)      # deploys via kubeadm init phase addon coredns
 
 Both functions check if the resource exists first and no-op if present. Safe to run on every second-run invocation. See [[kube-proxy-missing-after-dr]] for full implementation and 6 test cases.
 
+## Certificate SAN Mismatch (Post-Replacement)
+
+`_reconstruct_control_plane()` step 6 regenerates the API server certificate with the new instance's IPs in the SANs — this is handled automatically on the full DR path.
+
+**When it fails**: if the DR automation is interrupted after step 5 (kubeconfigs) but before step 6 (cert regeneration), the restored backup cert has old IPs in its SANs. The new instance's IP is rejected by kubelet TLS verification and workers cannot join.
+
+**Detection**: `just diagnose` Phase 3 checks cert SANs vs current IMDS IP — emits `[CRITICAL]` on mismatch.
+
+**Repair**: See [[control-plane-cert-san-mismatch]] for the full diagnostic and automated repair sequence (`just fix-cert` / `control-plane-autofix.ts`).
+
 ## CA Mismatch Handling
 
 Workers detect a CA change before attempting `kubeadm join`. If the local CA cert hash differs from `{prefix}/ca-hash` in SSM (control-plane replaced with a new CA), the worker runs:
@@ -121,6 +131,8 @@ If the S3 snapshot is unavailable (first deployment, manual deletion, or bucket 
 - [[self-hosted-kubernetes]] — bootstrap pipeline and step numbering
 - [[k8s-bootstrap-pipeline]] — SM-A triggers the DR recovery path
 - [[kube-proxy-missing-after-dr]] — DR gap: ensure_kube_proxy + ensure_coredns guards
+- [[control-plane-cert-san-mismatch]] — cert SAN failure mode on interrupted DR path; automated repair via control-plane-autofix.ts
+- [[operational-scripts]] — control-plane-troubleshoot.ts and autofix.ts implementation
 - [[cdk-kubernetes-stacks]] — EBS data volume design in LaunchTemplate
 - [[argocd]] — ArgoCD JWT key and TLS cert backup/restore in bootstrap sequence
 - [[observability-stack]] — monitoring PV stale cleanup on monitoring node replacement

@@ -1,10 +1,10 @@
 ---
 title: Backend for Frontend (BFF) Pattern
 type: pattern
-tags: [architecture, api, security, kubernetes, nodejs, cors]
-sources: [raw/kubernetes_system_design_review.md]
+tags: [architecture, api, security, kubernetes, nodejs, cors, tanstack]
+sources: [raw/kubernetes_system_design_review.md, raw/system_design_review.md]
 created: 2026-04-14
-updated: 2026-04-14
+updated: 2026-04-15
 ---
 
 # Backend for Frontend (BFF) Pattern
@@ -56,12 +56,24 @@ The BFF migration also simplifies credential handling:
 
 ## Implementation in This Project
 
-- **BFF:** `start-admin` — Next.js admin dashboard. Server-side functions make pod-to-pod calls to `admin-api` using the cluster's internal DNS (`http://admin-api-svc.default.svc.cluster.local:3002`)
+- **BFF:** `start-admin` — [[tanstack-start|TanStack Start]] admin dashboard. `createServerFn` RPC functions run server-side and make pod-to-pod calls to `admin-api` using the cluster's internal DNS (`http://admin-api-svc.default.svc.cluster.local:3002`)
 - **Internal API:** `admin-api` — [[hono]] service on port 3002, Cognito JWT middleware on all `/api/admin/*` routes
 - **CORS config on `admin-api`:** Retained with `https://nelsonlamounier.com` as the allowed origin (the admin sub-path `/admin/*` CloudFront routes to `start-admin`; browser origin is always the main domain)
 
+### `createServerFn` as BFF Primitive
+
+[[tanstack-start]] implements the BFF boundary via `createServerFn`. Each server function:
+1. Is annotated `'use server'`-equivalent by the Vinxi bundler
+2. Never appears in the browser bundle
+3. Makes the `apiFetch` pod-to-pod call to `admin-api`
+4. Returns typed data to the calling component
+
+This removes the need for a manual `fetch` proxy layer that would otherwise be required in a traditional BFF setup.
+
 ## Related Pages
 
+- [[tanstack-start]] — `start-admin` BFF framework; `createServerFn` RPC pattern
 - [[hono]] — `admin-api` implementation behind the BFF
 - [[k8s-bootstrap-pipeline]] — cluster context
+- [[frontend-portfolio]] — project overview for both apps
 - [[traefik]] — routes `/admin/*` traffic to `start-admin`, not `admin-api`
