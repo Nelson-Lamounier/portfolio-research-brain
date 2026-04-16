@@ -5,6 +5,7 @@ tags: [mcp, fastmcp, kubernetes, ai-engineering, s3, traefik, knowledge-base]
 sources: []
 created: 2026-04-16
 updated: 2026-04-16
+sources: [raw/strategist_pipeline_design_review_16_04.md]
 ---
 
 # wiki-mcp — FastMCP K8s MCP Server
@@ -21,14 +22,16 @@ wiki-mcp solves this by providing direct, deterministic access to the wiki's str
 
 ```mermaid
 flowchart LR
-    Lambda["Bedrock Lambda\n(non-VPC)"] -->|HTTPS POST /wiki-mcp/mcp| Traefik
+    Lambda["Bedrock Lambda\n(non-VPC)\nGET /api/constraints"] -->|HTTPS| Traefik
+    MCP["Claude Desktop\nCursor\nPOST /mcp"] -->|HTTPS| Traefik
     Traefik -->|StripPrefix + BasicAuth| Service["wiki-mcp\nClusterIP:80"]
     Service --> Pod["FastMCP pod\nport 8000"]
     Pod -->|boto3 S3 GetObject| S3["S3 kb-docs/\nwiki pages"]
     Pod -->|IMDS| IAM["EC2 Instance\nProfile"]
 
     style Lambda fill:#f59e0b,stroke:#d97706,color:#fff
-    style Traefik fill:#6366f1,stroke:#4f46e5,color:#fff
+    style MCP fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Traefik fill:#64748b,stroke:#475569,color:#fff
     style Pod fill:#22c55e,stroke:#16a34a,color:#fff
     style S3 fill:#3b82f6,stroke:#2563eb,color:#fff
     style IAM fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -46,7 +49,7 @@ async def healthz(request: Request) -> Response:
 
 `http_app()` then returns a Starlette app with routes `[Route('/mcp'), Route('/healthz')]`.
 
-K8s probes use `httpGet` on `/healthz` (200 JSON). Lambda calls `POST /mcp` (MCP protocol).
+K8s probes use `httpGet` on `/healthz` (200 JSON). Claude Desktop / Cursor clients use `POST /mcp` (MCP protocol). Bedrock Lambdas use the REST shortcut endpoints (`GET /api/constraints`, etc.) — no JSON-RPC overhead.
 
 ## Tools (7)
 
@@ -116,31 +119,36 @@ Cross-namespace middleware is NOT used — both middlewares live in `wiki-mcp` n
 
 ## Lambda Integration
 
-Lambda env vars required:
+Lambda env vars (injected by CDK `strategist-pipeline-stack.ts`):
 
 ```
-WIKI_MCP_URL  = https://ops.nelsonlamounier.com/wiki-mcp/mcp
-WIKI_MCP_AUTH = <SSM SecureString: /wiki-mcp/basicauth-header>
-                (value: "Basic <base64(mcp:password)>")
+WIKI_MCP_URL  = https://ops.nelsonlamounier.com/wiki-mcp   ← base URL, no /mcp suffix
+WIKI_MCP_AUTH = {{resolve:ssm-secure:/wiki-mcp/basicauth-header}}
+                (value: "Basic <base64(mcp:password)>", resolved at deploy time)
 ```
 
-Usage from Lambda (TypeScript):
+Research Lambda uses REST endpoints, not MCP JSON-RPC protocol — simpler, single round-trip:
 
 ```typescript
-const response = await fetch(process.env.WIKI_MCP_URL!, {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "Authorization": process.env.WIKI_MCP_AUTH!,
-    },
-    body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "tools/call",
-        params: { name: "get_resume_constraints", arguments: {} },
-        id: 1,
-    }),
+// GET /api/constraints → agent-guide + gap-awareness + voice-library (combined)
+const res = await fetch(`${WIKI_MCP_URL}/api/constraints`, {
+    headers: { Authorization: WIKI_MCP_AUTH },
+    signal: AbortSignal.timeout(10_000),
 });
+const constraints = await res.text();   // plain text, injected into kbContext
 ```
+
+**Available REST endpoints:**
+
+| Endpoint | Returns | Consumer |
+|---|---|---|
+| `GET /api/constraints` | agent-guide + gap-awareness + voice-library | Research agent — mandatory first call |
+| `GET /api/achievements` | resume/achievements | Resume generation |
+| `GET /api/career` | resume/career-history | Resume generation |
+| `GET /api/page?path=<path>` | Any wiki page by path | General access |
+| `GET /healthz` | `{"status":"ok"}` | K8s probes |
+
+MCP protocol (`POST /mcp`, JSON-RPC 2.0) is for Claude Desktop / Cursor clients, not Lambda.
 
 ## Local Development
 
@@ -180,11 +188,16 @@ aws ssm put-parameter \
   --value "Basic $(echo -n 'mcp:<password>' | base64)" \
   --type SecureString
 
-# 5. Build + push initial image
-docker build -t wiki-mcp -f scripts/wiki_mcp/Dockerfile .
-docker tag wiki-mcp 771826808455.dkr.ecr.eu-west-1.amazonaws.com/wiki-mcp:latest
-aws ecr get-login-password | docker login --username AWS --password-stdin 771826808455.dkr.ecr.eu-west-1.amazonaws.com
-docker push 771826808455.dkr.ecr.eu-west-1.amazonaws.com/wiki-mcp:latest
+# 5. Build + push initial image via GitHub Actions
+#    Trigger manually: workflow_dispatch on deploy-mcp.yml in my-mcp repo
+#    OR push any *.py / requirements.txt / Dockerfile change to main/develop
+#
+#    To push locally (first bootstrap before CI is wired):
+ECR_URL=$(aws ssm get-parameter --name /shared/ecr-wiki-mcp/development/repository-uri --query 'Parameter.Value' --output text)
+docker build -t wiki-mcp .
+docker tag wiki-mcp "${ECR_URL}:bootstrap"
+aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin "$ECR_URL"
+docker push "${ECR_URL}:bootstrap"
 ```
 
 CDK change (worker node IAM role — add to `KubernetesWorkerAsgStack`):

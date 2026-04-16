@@ -168,43 +168,65 @@ stateDiagram-v2
 
 ---
 
-## KB Integration Gap Analysis
+## KB Integration
 
-The Research Agent queries the portfolio [[concepts/observability-stack|KB]] via `RetrieveCommand` 3 times sequentially. The KB contains both factual wiki pages AND the structured [[resume/agent-guide|resume domain]] pages.
+The Research Agent fetches context from two sources in parallel: [[ai-engineering/wiki-mcp]] (deterministic, structured pages) and Pinecone via Bedrock `RetrieveCommand` (semantic, factual chunks).
 
-### The Core Problem
+### Why Two Sources
 
-RAG retrieval is **probabilistic** — it retrieves what is *semantically similar* to the query. The resume domain pages ([[resume/agent-guide]], [[resume/gap-awareness]], [[resume/concept-library]]) contain two types of content that RAG handles poorly:
+RAG retrieval is **probabilistic** — it returns what is *semantically similar* to the query. Resume domain pages ([[resume/agent-guide]], [[resume/gap-awareness]], [[resume/voice-library]]) contain hard rules that RAG handles poorly:
 
-**Mandatory constraints (hard rules)**
-"NEVER say service mesh", "NEVER claim SLA compliance", ABSENT concepts. If the job description query doesn't trigger semantic similarity with `gap-awareness.md`, those prohibitions are silently absent from the pipeline's context — exactly when they're most needed (when the JD matches an overclaim risk).
+- **Mandatory prohibitions** ("NEVER say service mesh", "NEVER claim SLA compliance") — absent from context if the JD query doesn't trigger similarity with `gap-awareness.md`
+- **ABSENT concepts** — not claimed at all; RAG may return a passage about the topic without the ABSENT annotation
 
-**Status classification (STRONG/PARTIAL/ABSENT)**
-The concept-library has confidence thresholds per concept. The strategist agent needs the STATUS before generating a bullet. RAG may return a passage about a PARTIAL concept without returning its STATUS annotation — the agent then claims it confidently.
+wiki-mcp solves this with deterministic retrieval: `GET /api/constraints` always returns all three constraint pages combined, regardless of the job description content.
 
-### Current Retrieval Flow
+### Implemented Retrieval Flow
 
 ```mermaid
 flowchart LR
-    A["3x RetrieveCommand\n(sequential)"] --> B[Passage dedup\n(broken — M5)]
-    B --> C[kbContext field]
-    C --> D[Strategist Agent\nprompt injection]
+    JD["Job Description"] --> R["Research Agent\n(research-agent.ts)"]
+
+    R -->|"Promise.all"| W["wiki-mcp\nGET /api/constraints"]
+    R -->|"Promise.all"| P1["Pinecone\nRetrieveCommand ×3\n(factual KB)"]
+
+    W -->|"agent-guide\ngap-awareness\nvoice-library"| RC[resumeConstraints]
+    P1 -->|"deduped passages"| KC[kbContext]
+
+    RC --> S[Strategist Agent]
+    KC --> S
+
+    subgraph Fallback["Fallback (wiki-mcp not configured)"]
+        F["Pinecone ×3\nconstraint queries"]
+    end
+
+    R -.->|"WIKI_MCP_URL unset"| F
+    F -.-> RC
 ```
 
-Problems:
-1. Queries are generic — no targeting of resume-domain pages
-2. Sequential (not parallel) — I2 from findings
-3. Dedup uses string equality including score prefix — M5 from findings
-4. Mandatory constraints may NOT be retrieved if not semantically similar to the query
+**Fallback path**: if `WIKI_MCP_URL` / `WIKI_MCP_AUTH` env vars absent, research agent falls back to 3 additional Pinecone queries targeting the constraint pages. Backward-compatible — pipeline runs without wiki-mcp deployed.
 
-### Recommended Changes
+### What Was Fixed
 
-See [[resume/agent-guide]] for the full constraint set that must be available in every pipeline run.
+| Original problem | Status |
+|---|---|
+| Constraint retrieval probabilistic — hard rules may be absent | ✅ Fixed — wiki-mcp `GET /api/constraints` always returns all 3 pages |
+| Sequential KB queries | ✅ Fixed — `Promise.all` over all 4 calls (3 factual + 1 constraints) |
+| Dedup includes score prefix (M5) | Open — still uses `new Set(allPassages)` with score prefix |
+| No retry on Bedrock `ThrottlingException` (H2) | Open — no retry wrapper in `runAgent()` |
 
-1. Add dedicated resume-domain KB queries (see design review)
-2. Inject hard rules directly into Strategist system prompt
-3. Parallelise KB queries (`Promise.all`)
-4. Fix content-only deduplication (M5)
+### CDK Wiring
+
+`strategist-pipeline-stack.ts` injects env vars into research Lambda:
+
+```typescript
+WIKI_MCP_URL:  'https://ops.nelsonlamounier.com/wiki-mcp',
+WIKI_MCP_AUTH: ssm.StringParameter.valueForSecureStringParameter(
+    this, '/wiki-mcp/basicauth-header'
+),  // resolved at CloudFormation deploy time — no runtime SSM call
+```
+
+See [[ai-engineering/wiki-mcp]] for the full server implementation.
 
 ---
 
