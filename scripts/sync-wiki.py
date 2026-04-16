@@ -305,6 +305,15 @@ def main():
             print(f"  ERROR processing {rel}: {exc}")
             stats["errors"] += 1
 
+    # ── KB index page — also upload index.md to kb-docs/ ─────────────────
+    # Required by wiki-mcp server's get_index() tool.
+    if INDEX_FILE.exists():
+        index_raw = INDEX_FILE.read_text(encoding="utf-8")
+        _upload(f"{KB_PREFIX}/index.md", index_raw, "text/markdown; charset=utf-8")
+        index_fm, _ = extract_frontmatter(index_raw)
+        _upload_json(f"{KB_PREFIX}/index.md.metadata.json", build_metadata_json(index_fm, "index"))
+        print(f"→ index.md (KB index)")
+
     # ── Navigation manifest ────────────────────────────────────────────────
     nav = parse_navigation()
     manifest = {

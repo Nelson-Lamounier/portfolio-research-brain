@@ -1,7 +1,7 @@
 ---
 title: Wiki Index
 type: index
-updated: 2026-04-14
+updated: 2026-04-16
 ---
 
 # Knowledge Base Index
@@ -25,6 +25,7 @@ updated: 2026-04-14
 - [[concepts/operational-scripts]] — scripts/local/ diagnostic suite: control-plane-troubleshoot.ts (4-phase, 1737 lines), ssm-automation.ts (dual CWL/API log retrieval), asg-audit.ts (orphan detection), control-plane-autofix.ts (3 runbooks); shared lib (resolveAuth, logger.ts monkey-patch); kb-drift-check.py
 - [[concepts/infra-testing-strategy]] — CDK testing pyramid: 32 unit tests (Template.fromStack, describe.each, negative assertions) + 16 integration tests (SSM anchor, requireParam, beforeAll caching); diagnostic-first failure messages
 - [[concepts/aws-devops-certification-connections]] — DOP-C02 exam domains mapped to real project implementations: Blue/Green↔ArgoRollouts, IaC↔CDK10Stack, DR↔etcd+kubeproxy, Monitoring↔LGTM, Security↔Checkov+OIDC+AROA; SPIDER framework; narrative threads for future article
+- [[concepts/dora-metrics]] — DORA framework reframed for solo developer: Lead Time ~30min, TTSR ~15min, CFR ~2%, on-demand deploy frequency; metric evidence, tracking plan (G1–G8 gaps), architecture maturity ratings
 
 ## Tools
 
@@ -76,7 +77,21 @@ updated: 2026-04-14
 - [[ai-engineering/chatbot]] — RAG-Grounded Conversational Agent: InvokeAgentCommand + Guardrails (content filters + grounding 0.7) + 6-layer defence-in-depth Lambda; 20 gaps (S/C/P/A); review based on KB prior to LLM Wiki migration
 - [[ai-engineering/rag-techniques]] — RAG technique inventory for chatbot: 12 techniques (A–L), A8 (no eval pipeline, HIGH) most critical; migration impact column shows which gaps worsen/improve with LLM Wiki as KB source
 - [[ai-engineering/self-healing-agent]] — Reactive Autonomous Agent: ConverseCommand + tool_use loop, 6 MCP tools via AgentCore, Cognito M2M, S3 episodic memory, hybrid prompt design, 15 gaps (4× HIGH security + SH-R4/R5)
+- [[ai-engineering/job-strategist]] — Multi-agent Job Strategist: Trigger Lambda → Analysis SM (Research/Haiku → Strategist/Sonnet → ResumeBuilder/Haiku → Persist) + Coaching SM; Zod validation, S3 payload offload, SF-native error handling; 3 High findings (H1–H3); KB integration gap analysis
+- [[ai-engineering/wiki-mcp]] — FastMCP HTTP K8s pod: 7 MCP tools exposing kb-docs/ S3 prefix; Starlette ASGI composition (/healthz + /mcp); Traefik StripPrefix+BasicAuth; EC2 IMDS creds; 10-min TTL cache; ArgoCD wave-5 workload; Lambda traffic path (non-VPC → HTTPS → Traefik → pod → S3)
 
 ## Comparisons
 
 - [[comparisons/llm-wiki-vs-bedrock-pipeline]] — LLM Wiki vs Bedrock article pipeline: where each excels, hybrid architecture proposal, 3-phase migration plan
+
+## Resume
+
+- [[resume/agent-guide]] — **START HERE for resume generation**: confidence thresholds (STRONG/PARTIAL/ABSENT), step-by-step instructions for summary/bullets/cover letter, ATS optimization rules, human-written output rules, hard rules agents must never break
+- [[resume/concept-library]] — per-concept evidence file paths and STRONG/PARTIAL/ABSENT status with recommended_framing: Kubernetes, GitOps, Observability, IaC (4 accounts), Security, AI Engineering (4 apps), Developer Tooling
+- [[resume/career-history]] — Amazon TCSA work history: ATS-ready bullets, AWS role context, 3-year HTML/CSS/JS documentation, automation project design (IN_PROGRESS), certifications, education
+- [[resume/voice-library]] — authentic phrase anchors from Nelson's own writing, banned AI terms, sentence-length variation rules, ATS keyword strategy, anti-AI-scan checklist
+- [[resume/narrative]] — unified engineer story across both projects: positioning statement, 3-act structure (Platform → Application → AI), support-to-DevOps transition narrative with Amazon evidence, competency map, role emphasis guide
+- [[resume/achievements]] — quantified scorecard with wiki-sourced evidence: DORA metrics, infra scale stats (20+ ArgoCD apps, 4 accounts), AI system metrics (4 Bedrock apps), Amazon TCSA accomplishments, resume bullet templates per archetype
+- [[resume/concept-to-resume]] — implementation detail → job language mapping: Infrastructure, Kubernetes, CI/CD, Observability, Security, AI Engineering tables with honesty boundaries
+- [[resume/gap-awareness]] — what's NOT in the portfolio and why: G1–G8 infra gaps (G5 resolved, G6 partial), AI engineering known gaps, context boundaries, critical overclaim boundaries (service mesh, Terraform, SLOs)
+- [[resume/role-archetypes]] — per-role bullet emphasis: Platform Engineer, SRE, Full-Stack, AI/ML Engineer, DevOps/Cloud; archetype selector by JD signal

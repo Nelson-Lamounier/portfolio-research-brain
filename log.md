@@ -322,3 +322,141 @@ type: log
   - `wiki/commands/kubectl-operations.md` — added BlueGreen Deployment Testing section, Traefik Connectivity Testing section, Networking Diagnostics section (VXLANAlways check, kube-proxy recovery)
   - `wiki/tools/github-actions.md` — added Frontend Deployment Pipeline section (4-parallel-track Mermaid diagram, build alignment invariant, ArgoCD parameter override)
   - `wiki/index.md` — added cluster-networking, cross-node-networking, kube-proxy-missing-after-dr, nextjs-image-asset-sync, kubectl-operations; updated calico/argo-rollouts/cdk-kubernetes-stacks/disaster-recovery/self-hosted-kubernetes descriptions
+
+## [2026-04-16] ingest + new domain | kubernetes_infrastructure_audit_16_04.md → DORA metrics concept + Resume domain
+
+### Source
+- `raw/kubernetes_infrastructure_audit_16_04.md` — 587 lines: 10-stack CDK audit, DORA metrics reframed for solo developer, quantified achievements scorecard, 8-gap analysis, architecture maturity ratings, TSDoc annotation plan
+
+### Key takeaways
+- DORA baselines established: Lead Time ~30min, TTSR ~15min, CFR ~2%, Deployment Frequency on-demand via ArgoCD
+- 10 quantified engineering achievements with exact numbers (600 lines eliminated, 75% boot reduction, 265+ assertions, 1:0.47 test ratio)
+- 8 infrastructure gaps (G1–G8) with specific fix paths — G1 (no automated DORA collection) and G2 (no smoke tests) highest priority
+- Architecture maturity ratings: IaC ⭐⭐⭐⭐⭐, CI/CD ⭐⭐⭐⭐⭐, GitOps ⭐⭐⭐⭐⭐, Security ⭐⭐⭐⭐½, Observability ⭐⭐⭐⭐½
+
+### New domain: Resume
+New `wiki/resume/` directory — translation layer: implementation facts → job-application language.
+
+### Pages created
+- `wiki/concepts/dora-metrics.md` — DORA framework reframed for solo dev; current baselines with evidence; metric tracking plan; G1–G8 gap inventory; architecture maturity ratings
+- `wiki/resume/narrative.md` — 3-act unified story (Platform → Application → AI); positioning statement; competency map; role emphasis guide; honest framing section
+- `wiki/resume/achievements.md` — quantified scorecard with wiki evidence links; DORA, infra scale, observability, AI stats; resume bullet templates per archetype
+- `wiki/resume/concept-to-resume.md` — 6-domain mapping tables (Infrastructure, Kubernetes, CI/CD, Observability, Security, AI Engineering); honesty boundaries per claim
+- `wiki/resume/gap-awareness.md` — context boundaries table; G1–G8 infra gaps; security gaps (SH-S1/S2/S5/S6); AI engineering gaps; what was NOT built list; what's unusual list
+- `wiki/resume/role-archetypes.md` — 5 archetypes with lead bullets, evidence pages, sample bullets, gap acknowledgement notes; archetype selector by JD signal
+
+### Files updated
+- `CLAUDE.md` — added `resume/` to wiki directory schema; added Operation 5 (Resume) rules with 6 mandatory steps
+- `wiki/index.md` — added dora-metrics to Concepts; added Resume section with 5 entries; updated date to 2026-04-16
+
+## [2026-04-16] correction + new pages | raw/resume-domain.md comparison → Resume domain fixes
+
+### Source
+- `raw/resume-domain.md` — v1.0 generated from live codebase scan; supersedes audit-derived claims in wiki/resume/*
+
+### Corrections applied (audit was wrong, codebase scan is authoritative)
+
+| File | What changed |
+|---|---|
+| `wiki/resume/gap-awareness.md` | G5 (PodDisruptionBudgets) marked RESOLVED — PDBs implemented in monitoring values.yaml. G6 downgraded to PARTIAL — NetworkPolicies exist for admin-api and monitoring but no cluster-wide default-deny. Added critical "service mesh" boundary (NEVER use phrase). Added formal SLOs boundary. Added GCP/large-scale/Commander.js absent boundaries. |
+| `wiki/resume/achievements.md` | ArgoCD app count corrected 9 → 20+. Added 4 AWS accounts row. Added 4 Bedrock applications row (job-strategist was missing). GitHub Actions workflows corrected 26 → 22+. Sources updated to include raw/resume-domain.md. |
+| `wiki/resume/narrative.md` | Added Support-to-DevOps transition narrative section. Corrected competency table: 4 accounts, 22+ workflows, 20+ ArgoCD apps. Sources updated. |
+
+### Pages created
+- `wiki/resume/agent-guide.md` — **direct path for AI agents**: confidence threshold table, step-by-step instructions for summary/bullets/cover letter, JD signal → narrative quick-map, 10 hard rules (no "service mesh", no SLA claims, no Terraform claims, etc.)
+- `wiki/resume/concept-library.md` — STRONG/PARTIAL/ABSENT status per concept with actual evidence file paths from codebase scan; recommended_framing per concept; absent concepts table
+
+### Files updated
+- `wiki/index.md` — Resume section updated: agent-guide and concept-library added as first two entries (START HERE ordering)
+
+## [2026-04-16] ingest | strategist_pipeline_design_review_16_04.md → Job Strategist wiki page
+
+### Source
+- `raw/strategist_pipeline_design_review_16_04.md` — Architecture & Security Audit of `bedrock-applications/job-strategist/` + `infra/lib/stacks/bedrock/`
+
+### Key findings
+- No Critical findings — pipeline is functional and deployable
+- H3 (P0): `ASSETS_BUCKET` missing from Trigger Lambda CDK environment — silent 256KB breach on real inputs
+- H1: 4 of 6 handlers use `process.env.VAR ?? ''` (silent fallback) instead of Zod fail-fast
+- H2: No Bedrock retry logic — ThrottlingException/503 causes full pipeline failure
+- M5: KB deduplication uses full passage string (including score prefix) — near-duplicate passages not filtered
+- I2: 3 KB queries run sequentially — parallelising with Promise.all() saves ~30–40% research latency
+
+### KB integration gap identified
+- Research Agent queries portfolio KB 3× via RetrieveCommand (RAG/semantic retrieval)
+- Resume domain pages (agent-guide, gap-awareness, concept-library) contain mandatory constraints — NEVER retrieved when not semantically similar to JD query
+- Design changes needed: dedicated resume-domain queries, direct injection of hard rules into system prompt
+
+### Pages created
+- `wiki/ai-engineering/job-strategist.md` — full architecture, strengths table (S1-S8), H1-H3 findings, M1-M6 table, actual DynamoDB entity schema (vs wrong JSDoc), prompt engineering assessment, KB integration gap analysis, remediation priority matrix
+
+### Files updated
+- `wiki/index.md` — added job-strategist to AI Engineering section
+
+## [2026-04-16] ingest | aws_support_career_review_2026.md → Career history + Voice library
+
+### Source
+- `raw/aws_support_career_review_2026.md` — sanitised annual review; omitted: manager name, internal tool/process acronyms (PAA/MAC), performance plan details; retained: accomplishments, certifications, education, management endorsement, authentic voice samples
+
+### Additional content added (not in source document)
+- 3 years HTML/CSS/JS internal wiki documentation across multiple AWS teams
+- Case distribution automation project: architecture design, problem statement (10–20 hrs/week), technical design (Dante Scripts), business case status (pending security approval + SXO sponsorship)
+
+### Key decisions
+- Internal Amazon terms translated: "PAA Champion" → "service continuity lead", "Kiro SME" → "technical tooling SME", case types omitted
+- Performance plan history omitted entirely — outcome ("Meets High Bar") retained
+- Leadership Principles evidence retained with non-Amazon translation table
+- Automation project framed as IN_PROGRESS — "designed" not "built"
+
+### Pages created
+- `raw/aws_support_career_review_2026.md` — sanitised source with resume-ready framing, authentic voice samples, LP translation table
+- `wiki/resume/career-history.md` — Amazon TCSA work history in ATS-ready format; role context for transition narrative; automation project IN_PROGRESS framing; certifications; LP→universal translation
+- `wiki/resume/voice-library.md` — authentic phrase anchors (Nelson's own writing), tone profile, sentence-length variation rules, banned AI terms, good verbs, cover letter voice guidelines, ATS keyword strategy, anti-AI-scan checklist
+
+### Pages updated
+- `wiki/resume/narrative.md` — Support-to-DevOps section enriched with concrete Amazon evidence (role, cert, degree, management endorsement, documentation work, automation project)
+- `wiki/resume/achievements.md` — added Amazon Work History Accomplishments table + ATS bullet templates
+- `wiki/resume/agent-guide.md` — added ATS Optimization Rules section, Human-Written Output Rules section; voice-library and career-history added to related pages
+- `wiki/index.md` — Resume section updated with career-history and voice-library entries; agent-guide description updated to mention ATS/human-writing rules
+
+## [2026-04-16] implement | wiki-mcp FastMCP K8s pod
+
+### Operation
+Designed and implemented wiki-mcp: FastMCP HTTP server that exposes the knowledge base as MCP tools, deployable as a Kubernetes pod on the existing cluster.
+
+### Architecture
+- FastMCP v2 streamable-http transport on port 8000
+- Starlette ASGI composition: `/healthz` (K8s probes) + `/mcp` (FastMCP endpoint)
+- S3 `kb-docs/` content source with 10-min in-memory TTL cache
+- EC2 instance profile credentials (IMDS) — same as admin-api, zero K8s secrets
+- Traefik IngressRoute: `ops.nelsonlamounier.com/wiki-mcp` → StripPrefix + BasicAuth → ClusterIP:80 → pod:8000
+- Lambda traffic path: non-VPC Lambda → public HTTPS → Traefik → wiki-mcp pod → S3
+
+### Tools exposed (7)
+- `get_page(path)` — fetch any wiki page by path
+- `get_resume_constraints()` — combined agent-guide + gap-awareness + voice-library
+- `get_career_history()` — Amazon work history
+- `get_achievements()` — quantified scorecard
+- `search(query, category)` — keyword search with path + content matching
+- `list_pages(category)` — list available pages
+- `get_index()` — full wiki index
+
+### Files created
+- `scripts/wiki_mcp/__init__.py` — package init
+- `scripts/wiki_mcp/kb.py` — S3 content reader with TTL cache
+- `scripts/wiki_mcp/server.py` — FastMCP server with 7 tools + ASGI composition
+- `scripts/wiki_mcp/Dockerfile` — 3-stage Python 3.12-slim build, non-root uid 1001
+- `kubernetes-app/workloads/charts/wiki-mcp/chart/` — Helm chart (Chart.yaml, values.yaml, 4 templates)
+- `kubernetes-app/workloads/argocd-apps/wiki-mcp.yaml` — ArgoCD app (wave 5, Image Updater)
+
+### Files updated
+- `scripts/requirements.txt` — added fastmcp>=2.13.0, uvicorn[standard], starlette
+- `scripts/sync-wiki.py` — added index.md upload to kb-docs/ prefix
+
+### Pending (one-time setup before first sync)
+1. `kubectl create namespace wiki-mcp`
+2. Create `wiki-mcp-basicauth` K8s Secret (htpasswd format)
+3. Create `wiki-mcp-config` ConfigMap with `WIKI_S3_BUCKET`
+4. Store BasicAuth header in SSM `/wiki-mcp/basicauth-header`
+5. CDK change: add S3 read policy to worker node IAM role for kb-docs/*
+6. Create ECR repo `wiki-mcp`, build + push initial image

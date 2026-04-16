@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "wiki-kb": {
+      "command": "/Users/nelsonlamounier/Desktop/portfolio/my-mcp/.venv/bin/python",
+      "args": ["/Users/nelsonlamounier/Desktop/portfolio/my-mcp/server.py"],
+      "env": {
+        "MCP_MODE": "stdio",
+        "WIKI_LOCAL_PATH": "/Users/nelsonlamounier/Desktop/portfolio/reasearch-brain/kowledge-base"
+      }
+    }
+  }
+}

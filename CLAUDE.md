@@ -42,7 +42,8 @@ wiki/
 ├── troubleshooting/   # problem → diagnosis → solution pages
 ├── commands/          # executable command references grouped by tool or workflow
 ├── comparisons/       # side-by-side analyses (e.g., ecs-vs-eks.md)
-└── ai-engineering/    # LLM system design, inference-time techniques, prompt engineering, RAG patterns
+├── ai-engineering/    # LLM system design, inference-time techniques, prompt engineering, RAG patterns
+└── resume/            # Translation layer: implementation facts → job-application language, role archetypes, gap awareness
 ```
 
 ### Layer 3: This File (`CLAUDE.md`)
@@ -160,6 +161,17 @@ When asked to generate content for downstream use (portfolio articles, chatbot t
 2. Synthesize content in the requested format.
 3. Cite source wiki pages so the output is traceable.
 4. Offer to save the generated content if it belongs in the wiki.
+
+### 5. Resume
+
+When generating resume content, cover letters, or LinkedIn copy from the wiki:
+
+1. **Read `resume/gap-awareness.md` first** — mandatory before any claim generation.
+2. Pull numbers only from `resume/achievements.md` — no inventing metrics.
+3. Use `resume/concept-to-resume.md` for safe implementation → job language translation.
+4. Select emphasis from `resume/role-archetypes.md` based on the target role or JD.
+5. All claims must have a source wiki page. If a claim has no wiki evidence, do not make it.
+6. Include scope qualifiers (portfolio, solo, dev environment) unless the user explicitly asks to omit them.
 
 ## Special Files
 
