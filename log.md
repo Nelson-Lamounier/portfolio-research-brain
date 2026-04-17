@@ -460,3 +460,21 @@ Designed and implemented wiki-mcp: FastMCP HTTP server that exposes the knowledg
 4. Store BasicAuth header in SSM `/wiki-mcp/basicauth-header`
 5. CDK change: add S3 read policy to worker node IAM role for kb-docs/*
 6. Create ECR repo `wiki-mcp`, build + push initial image
+
+## [2026-04-17] ingest | admin-api, analysis panel flow, job strategist handlers, wiki-mcp TypeScript migration
+
+### Sources ingested
+- `raw/admin_api_architecture_review.md` — full Hono BFF architectural review
+- `raw/analysis_panel_flow_report.md` — NewAnalysisPanel form submission flow (React → admin-api → Lambda)
+- `raw/code_review_job_strategist.md` — TypeScript code review of strategist Lambda handlers
+- `raw/wiki_mcp_review.md` — comprehensive Python → TypeScript migration review
+
+### Pages created
+- `wiki/projects/admin-api.md` — admin-api BFF: 7 routers, DynamoDB schema, auth flow, finops, design issues (non-atomic resume + comment ops)
+- `wiki/concepts/dynamodb-single-table.md` — single-table design pattern: composite keys, GSI status queries, atomicity risks
+
+### Pages updated
+- `wiki/tools/hono.md` — added wiki-mcp Hono context, `server.getApp()` API, Hono context API table, admin-api structural notes
+- `wiki/ai-engineering/job-strategist.md` — added `AgentResult<T>` generic, handler type chain, S3 payload offload pattern, Lambda warm-start cache, Zod cold-start validation, code review findings
+- `wiki/ai-engineering/wiki-mcp.md` — updated for TypeScript migration: new stack, `server.getApp()` pattern, Zod tool schemas, Yarn 4 PnP fix, 3-stage Dockerfile, open issues
+- `index.md` — added admin-api, dynamodb-single-table; updated wiki-mcp summary

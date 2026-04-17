@@ -2,9 +2,9 @@
 title: Hono
 type: tool
 tags: [nodejs, api, typescript, kubernetes, hono, rest]
-sources: [raw/kubernetes_system_design_review.md]
+sources: [raw/kubernetes_system_design_review.md, raw/admin_api_architecture_review.md]
 created: 2026-04-14
-updated: 2026-04-14
+updated: 2026-04-17
 ---
 
 # Hono
@@ -77,9 +77,40 @@ This is the recommended pattern for EC2-hosted pods without IRSA (no EKS IAM rol
 
 The article listing uses a GSI (`gsi1-status-date`) with `gsi1pk = STATUS#published` to retrieve all published articles without a full table scan. On status change (`draft` → `review` → `published`), `admin-api` updates `gsi1pk` so the GSI stays consistent.
 
+## Hono in wiki-mcp (TypeScript Migration)
+
+[[ai-engineering/wiki-mcp]] also uses Hono indirectly — `fastmcp`'s `server.getApp()` returns the underlying Hono instance for adding custom REST routes:
+
+```typescript
+const app = server.getApp();   // returns Hono instance
+app.get('/healthz', async (c) => c.json({ status: 'ok' }));
+app.get('/api/constraints', async (c) => c.text(await kb.getPages([...])));
+```
+
+Note: `server.addRoute()` does **not** exist in fastmcp 3.35.0 — `getApp()` is the correct approach. Must be called before `server.start()`.
+
+## Hono Context API
+
+| Hono | Equivalent (Starlette/Express) |
+|---|---|
+| `c.json(obj, status?)` | `JSONResponse(obj, status_code=...)` |
+| `c.text(str)` | `Response(str, media_type='text/plain')` |
+| `c.req.query('key')` | `request.query_params.get('key')` |
+
+## admin-api Architecture (Full Detail)
+
+See [[projects/admin-api]] for complete route map, DynamoDB schema, and design issues. Key structural notes:
+
+- Single Cognito JWT middleware mounted once at top-level `app` in `index.ts` — all 7 routers inherit it
+- Fail-fast config: `loadConfig()` at startup throws if any env var missing → `CrashLoopBackOff` in K8s
+- Lazy singleton AWS clients per route module (`let _docClient = null; if (!_docClient) {...}`)
+- `removeUndefinedValues: true` on all DocumentClient instances — silently drops undefined fields
+
 ## Related Pages
 
 - [[bff-pattern]] — why `admin-api` is only called pod-to-pod
+- [[projects/admin-api]] — full admin-api architecture, route map, DynamoDB schema
 - [[k8s-bootstrap-pipeline]] — deployment context; SM-B configures `admin-api` secrets and ConfigMaps
 - [[observability-stack]] — FinOps routes in `admin-api` surface token costs from CloudWatch
 - [[self-healing-agent]] — `admin-api` `/finops/self-healing` route surfaces remediation token costs
+- [[ai-engineering/wiki-mcp]] — wiki-mcp also uses Hono via fastmcp `server.getApp()`

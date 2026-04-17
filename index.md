@@ -1,7 +1,7 @@
 ---
 title: Wiki Index
 type: index
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # Knowledge Base Index
@@ -10,6 +10,7 @@ updated: 2026-04-16
 
 - [[projects/k8s-bootstrap-pipeline]] — CDK-managed self-hosted Kubernetes bootstrap pipeline on EC2 with Step Functions, SSM, and full cluster topology for `nelsonlamounier.com`
 - [[projects/frontend-portfolio]] — Yarn 4 monorepo: Next.js 15 public site (`apps/site`) + TanStack Start admin dashboard (`apps/start-admin`); OTel traces, prom-client metrics, Faro RUM, Cognito PKCE auth, 4-stage Docker builds
+- [[projects/admin-api]] — Hono v4 BFF for start-admin: 7 routers (articles, applications, pipelines, resumes, drafts, finops, comments), DynamoDB single-table, Cognito JWT via JWKS, Lambda invocations, EC2 IMDS creds, K8s pod
 
 ## Concepts
 
@@ -26,6 +27,7 @@ updated: 2026-04-16
 - [[concepts/infra-testing-strategy]] — CDK testing pyramid: 32 unit tests (Template.fromStack, describe.each, negative assertions) + 16 integration tests (SSM anchor, requireParam, beforeAll caching); diagnostic-first failure messages
 - [[concepts/aws-devops-certification-connections]] — DOP-C02 exam domains mapped to real project implementations: Blue/Green↔ArgoRollouts, IaC↔CDK10Stack, DR↔etcd+kubeproxy, Monitoring↔LGTM, Security↔Checkov+OIDC+AROA; SPIDER framework; narrative threads for future article
 - [[concepts/dora-metrics]] — DORA framework reframed for solo developer: Lead Time ~30min, TTSR ~15min, CFR ~2%, on-demand deploy frequency; metric evidence, tracking plan (G1–G8 gaps), architecture maturity ratings
+- [[concepts/dynamodb-single-table]] — DynamoDB single-table design: `pk`+`sk` composite key, GSI for status queries (`gsi1pk = ENTITY#<status>`), batch delete pattern, atomicity risks with sequential UpdateItem
 
 ## Tools
 
@@ -78,7 +80,7 @@ updated: 2026-04-16
 - [[ai-engineering/rag-techniques]] — RAG technique inventory for chatbot: 12 techniques (A–L), A8 (no eval pipeline, HIGH) most critical; migration impact column shows which gaps worsen/improve with LLM Wiki as KB source
 - [[ai-engineering/self-healing-agent]] — Reactive Autonomous Agent: ConverseCommand + tool_use loop, 6 MCP tools via AgentCore, Cognito M2M, S3 episodic memory, hybrid prompt design, 15 gaps (4× HIGH security + SH-R4/R5)
 - [[ai-engineering/job-strategist]] — Multi-agent Job Strategist: Trigger Lambda → Analysis SM (Research/Haiku → Strategist/Sonnet → ResumeBuilder/Haiku → Persist) + Coaching SM; Zod validation, S3 payload offload, SF-native error handling; 3 High findings (H1–H3); KB integration gap analysis
-- [[ai-engineering/wiki-mcp]] — FastMCP HTTP K8s pod: 7 MCP tools exposing kb-docs/ S3 prefix; Starlette ASGI composition (/healthz + /mcp); Traefik StripPrefix+BasicAuth; EC2 IMDS creds; 10-min TTL cache; ArgoCD wave-5 workload; Lambda traffic path (non-VPC → HTTPS → Traefik → pod → S3)
+- [[ai-engineering/wiki-mcp]] — FastMCP K8s pod (migrated Python → TypeScript): 7 MCP tools + REST escape hatch for Lambda; `server.getApp()` Hono routes; Zod tool validation; 3-stage Node 22 Docker build; Yarn 4 node-modules linker; EC2 IMDS creds; 10-min TTL cache
 
 ## Comparisons
 

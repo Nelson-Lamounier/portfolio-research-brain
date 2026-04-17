@@ -1,10 +1,10 @@
 ---
 title: Job Strategist Pipeline
 type: ai-engineering
-tags: [ai-engineering, bedrock, step-functions, dynamodb, rag, resume, multi-agent]
-sources: [raw/strategist_pipeline_design_review_16_04.md]
+tags: [ai-engineering, bedrock, step-functions, dynamodb, rag, resume, multi-agent, typescript]
+sources: [raw/strategist_pipeline_design_review_16_04.md, raw/code_review_job_strategist.md, raw/analysis_panel_flow_report.md]
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # Job Strategist Pipeline
@@ -247,6 +247,117 @@ See [[ai-engineering/wiki-mcp]] for the full server implementation.
 
 ---
 
+---
+
+## Handler Type System
+
+### `AgentResult<T>` — Core Generic Wrapper
+
+Every agent output is wrapped in this generic:
+
+```typescript
+interface AgentResult<T> {
+    data: T;
+    tokenUsage: { inputTokens: number; outputTokens: number; thinkingTokens: number };
+    durationMs: number;
+    agentName: string;
+    modelId: string;
+    costUsd: number;
+}
+```
+
+Everything flows as `AgentResult<SomeSpecificResult>`. FinOps metrics accumulate across handlers.
+
+### Handler Type Chain (Analysis Pipeline)
+
+```
+Trigger Lambda
+  builds StrategistPipelineContext → StrategistResearchHandlerInput = { context }
+        │
+        ▼
+research-handler
+  input:  { context }
+  output: { context, research: AgentResult<StrategistResearchResult> }
+        │
+        ▼
+strategist-handler
+  input:  { context, research }
+  output: { context(trimmed), research(trimmed), analysis: AgentResult<StrategistAnalysisResult> }
+        │
+        ▼
+resume-builder-handler
+  input:  { context, research, analysis }
+  output: { context(resumeData=null), research, analysis, tailoredResume: AgentResult<TailoredResumeResult> | null }
+        │
+        ▼
+analysis-persist-handler  (DynamoDB write)
+```
+
+**Coaching pipeline:**
+
+```
+coach-loader-handler: loads ANALYSIS# from DDB → StrategistCoachHandlerInput = { context, analysis }
+        │
+        ▼
+coach-handler: produces InterviewCoachResult, writes INTERVIEW#<stage> to DDB
+```
+
+### Payload Trimming + S3 Offload
+
+Step Functions has a **256KB state payload limit**. `strategist-handler.ts` proactively offloads the analysis XML to S3 and passes an `s3://` pointer through the state machine:
+
+```typescript
+// analysisXml (80–150KB XML) → S3
+const xmlS3Key = `${pipelineId}/analysis.xml`;
+await s3.putObject({ Key: xmlS3Key, Body: analysisXml });
+
+// Replace content with pointer
+const trimmedAnalysis = {
+    ...analysis,
+    data: { ...analysis.data, analysisXml: `s3://${ASSETS_BUCKET}/${xmlS3Key}` },
+};
+```
+
+`analysisXml` is typed as `string` in both the content and pointer states — the "this string is an S3 reference" contract is implicit, not captured in the type system. The `analysis-persist-handler` must know to rehydrate it.
+
+Each subsequent handler also trims fields no longer needed (`jobDescription: '[trimmed]'`, `kbContext: '[trimmed]'`, `resumeData: null`) to stay under the 256KB limit.
+
+### Lambda Warm-Start Cache
+
+Module-level mutable variables persist across warm Lambda invocations:
+
+```typescript
+let cachedWikiMcpAuth = '';   // module-level — survives warm starts
+```
+
+This is intentional: fetching the SSM auth token on every invocation adds latency. The variable is effectively a Lambda-context cache, not an in-memory database. It does NOT survive pod restarts or cold starts.
+
+### Zod Env Validation at Cold Start
+
+```typescript
+// At module scope (not inside handler) — runs at Lambda cold start
+const env = AgentHandlerEnvSchema.parse(process.env);
+```
+
+If env vars are missing, the Lambda throws before any invocation reaches the handler — fail-fast pattern. Same as [[projects/admin-api]]'s `loadConfig()`.
+
+---
+
+## Code Review Findings (2026-04-17)
+
+| Rating | Finding | Location |
+|---|---|---|
+| ✅ | `AgentResult<T>` generic well used — no `any` | All handlers |
+| ✅ | Zod env validation at module scope (fail-fast) | `coach-handler.ts`, `strategist-handler.ts` |
+| ✅ | `readonly` on all `StructuredResumeData` fields | Shared types |
+| ✅ | Arrow const pattern for handlers; function declaration for agents | Consistent split |
+| ⚠️ | `analysisXml` as S3 pointer has no type distinction from content | `strategist-handler.ts` |
+| ⚠️ | `agentName: 'strategist-writer'` hardcoded in `coach-loader-handler.ts` | `coach-loader-handler.ts:119` |
+| ⚠️ | 3 `@deprecated` fields still flowing through pipeline | `StrategistAnalysisResult` |
+| ⚠️ | `cachedWikiMcpAuth` module-level var not documented as Lambda-context cache | `research-agent.ts:153` |
+
+---
+
 ## Related Pages
 
 - [[resume/agent-guide]] — the direct-path guide agents must read before generating resume content
@@ -254,5 +365,8 @@ See [[ai-engineering/wiki-mcp]] for the full server implementation.
 - [[resume/gap-awareness]] — what NOT to claim (including mandatory hard rules)
 - [[ai-engineering/article-pipeline]] — sibling pipeline (Deterministic Workflow pattern)
 - [[ai-engineering/self-healing-agent]] — sibling pipeline (Reactive Autonomous pattern)
+- [[ai-engineering/wiki-mcp]] — knowledge base server used by research agent
 - [[tools/aws-bedrock]] — ConverseCommand/InvokeModel API patterns
 - [[tools/aws-step-functions]] — state machine orchestration patterns
+- [[projects/admin-api]] — BFF that triggers this pipeline via `/api/admin/pipelines/strategist`
+- [[concepts/dynamodb-single-table]] — single-table design used for APPLICATION# records

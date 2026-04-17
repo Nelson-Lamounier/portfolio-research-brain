@@ -1,11 +1,10 @@
 ---
 title: wiki-mcp — FastMCP K8s MCP Server
 type: ai-engineering
-tags: [mcp, fastmcp, kubernetes, ai-engineering, s3, traefik, knowledge-base]
-sources: []
+tags: [mcp, fastmcp, kubernetes, ai-engineering, s3, traefik, knowledge-base, typescript, nodejs]
+sources: [raw/strategist_pipeline_design_review_16_04.md, raw/wiki_mcp_review.md]
 created: 2026-04-16
-updated: 2026-04-16
-sources: [raw/strategist_pipeline_design_review_16_04.md]
+updated: 2026-04-17
 ---
 
 # wiki-mcp — FastMCP K8s MCP Server
@@ -220,9 +219,97 @@ workerRole.addToPolicy(new iam.PolicyStatement({
 - **Write-back**: `git:secret:argocd/repo-cdk-monitoring` (same as other workloads)
 - **Namespace**: `wiki-mcp` (`CreateNamespace=true` syncOption)
 
+---
+
+## TypeScript Migration (Python → TypeScript)
+
+> **Status:** Python implementation deleted. Service now runs Node.js 22 + TypeScript 5.8 + fastmcp (npm).
+
+### Why Migrate
+
+- Project standard: entire portfolio monorepo is TypeScript
+- AWS SDK v3 (`@aws-sdk/client-s3`) has first-class TS types; `boto3` stubs lag
+- `fastmcp` npm is the primary maintained variant; Python FastMCP has fewer features
+- Node 22 base image (~80 MB) vs Python 3.13-slim + pip packages
+
+### New Stack
+
+| Tech | Role |
+|---|---|
+| TypeScript 5.8 / Node.js 22 | Runtime |
+| fastmcp 3.35.0 (npm) | MCP server framework — `server.addTool()` |
+| Hono (via fastmcp) | Web framework — `server.getApp()` for custom routes |
+| `@aws-sdk/client-s3` v3 | S3 access |
+| Zod | MCP tool parameter validation |
+| `glob` (npm) | File discovery for local mode |
+| Docker Node 22 multi-stage | 3 stages: deps → builder → runner |
+| Yarn 4 (`nodeLinker: node-modules`) | Package management |
+
+### `server.getApp()` — Hono Route Registration
+
+```typescript
+// ❌ server.addRoute() does NOT exist in fastmcp 3.35.0
+// ✅ Correct:
+const app = server.getApp();   // returns Hono instance
+app.get('/healthz', async (c) => c.json({ status: 'ok' }));
+app.get('/api/constraints', async (c) => c.text(await kb.getPages([...])));
+// Must call getApp() BEFORE server.start()
+```
+
+### Zod Schemas for MCP Tools
+
+Python used FastMCP decorator with typed function parameters. TypeScript uses Zod:
+
+```typescript
+server.addTool({
+  name: 'get_page',
+  description: 'Returns a wiki page.',
+  parameters: z.object({
+    path: z.string().min(1).describe('Wiki page path without .md'),
+  }),
+  execute: async ({ path }) => await kb.getPage(path),
+});
+```
+
+`z.string().min(1)` enforces non-empty input at the framework level — no manual validation.
+
+### Yarn 4 PnP → node-modules Switch
+
+Yarn 4 defaults to PnP (Plug'n'Play). Node.js's native `node` binary can't resolve PnP without the `.pnp.cjs` loader. Fix:
+
+```yaml
+# .yarnrc.yml
+nodeLinker: node-modules
+```
+
+This creates a standard `node_modules/` folder so `node dist/server.js` works without a loader.
+
+### 3-Stage Dockerfile
+
+```
+deps    → yarn install (all deps including devDeps)
+builder → tsc compile → dist/
+runner  → copy dist/ + prod node_modules only, non-root uid 1001
+```
+
+Source `.ts` files are **never in the final image** — only compiled output.
+
+### Open Issues Post-Migration
+
+| Severity | Gap |
+|---|---|
+| 🔴 | No Jest tests — `src/kb.ts` TTL cache, S3 error branches, `search()` untested |
+| 🟡 | No cache size limit — `Map` grows unbounded (same as Python `dict`) |
+| 🟡 | No pagination on `/api/search` — max 20 results, no offset |
+| 🟢 | Stale `.github/workflow/` (typo, missing `s`) — GitHub ignores it; contains old BFF pipeline |
+| 🟢 | `MCP_MODE` env var not present in ArgoCD Helm values — stdio only works locally |
+
+---
+
 ## Related Pages
 
 - [[ai-engineering/job-strategist]] — primary consumer: research agent should call get_resume_constraints() first
+- [[tools/hono]] — Hono framework used internally via fastmcp `server.getApp()`
 - [[tools/traefik]] — IngressRoute, middleware, StripPrefix pattern
 - [[tools/argocd]] — GitOps deployment, Image Updater
 - [[concepts/observability-stack]] — monitoring namespace (Prometheus scrapes wiki-mcp metrics)
