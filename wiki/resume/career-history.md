@@ -124,6 +124,72 @@ improving cross-team onboarding efficiency.
 
 ---
 
+## Self-Directed Platform Engineer — Portfolio Projects
+**Period:** 2022–present (ongoing alongside employment)
+**Title canonical form:** "Self-Directed Platform Engineer" — NEVER "Freelance Software Engineer"
+
+### Why the title matters
+
+"Freelance Software Engineer" signals client work and hourly billing. "Self-Directed Platform Engineer" signals deliberate technical investment — the correct read for a portfolio-driven engineering candidate.
+
+### Permitted bullets for TSE / SRE / infrastructure roles
+
+Include only bullets that demonstrate:
+1. Kubernetes operational depth (kubeadm, ArgoCD, Calico CNI, Traefik v3, Argo Rollouts)
+2. IaC and CI/CD pipeline design (CDK TypeScript, GitHub Actions, OIDC)
+3. Observability stack (Kubernetes-native: Prometheus, Loki via Grafana Alloy, Tempo over gRPC/OTLP)
+4. Disaster recovery (etcd + PKI backup to S3, self-healing node replacement)
+5. AI engineering if JD mentions AI/LLM/Bedrock
+
+### Bullets to EXCLUDE for TSE / SRE / infrastructure roles
+
+The following bullets must NOT appear in the Freelance / Self-Directed section for TSE-type roles. They are either wrong-context or already covered elsewhere:
+
+| Bullet | Reason to exclude |
+|---|---|
+| Serverless REST API (Lambda, API Gateway, DynamoDB, HMAC token) | Not Kubernetes, not customer support context — belongs in full-stack/backend roles only |
+| Cost analysis / CloudTrail / Cost Explorer / Trusted Advisor / idle EBS | FinOps signal, not SRE signal — not in TSE JD |
+| CI/CD pipeline described in full | Already in Key Achievements as the stronger version — deduplication rule applies |
+| Container hardening described in full | Already in Key Achievements — one instance only across the resume |
+
+### Deduplication enforcement for this section
+
+Before writing any Freelance / Self-Directed bullets, list what is already in Key Achievements. Any concept already stated in Key Achievements at full length must not be restated here. Apply the one-clause maximum rule — a brief reference (tool name + one outcome word) is permitted, a full re-explanation is not.
+
+---
+
+## Meta / Accenture — Quality Operations
+**Title canonical form:** Use the exact job title from DynamoDB resume data — do not rephrase
+
+### Framing for TSE / infrastructure roles
+
+**NEVER frame this role as QA operations for a TSE or infrastructure application.** The QA operations framing signals test script execution and defect logging — irrelevant to the TSE hiring signal.
+
+The useful angles from this role for TSE / SRE / platform applications:
+
+1. **Distributed systems investigation at scale** — exposure to investigating failures across large-scale, distributed consumer platforms. Frame as: systematic investigation across distributed systems components, cross-service failure correlation, structured debugging methodology.
+2. **Cross-functional collaboration methodology** — working across engineering, product, and operations teams at scale. Frame as: structured coordination across multiple stakeholder teams, escalation path navigation, documentation of findings for non-technical and technical audiences.
+
+### ATS-ready framing for TSE roles
+
+```
+Investigated and documented failures across distributed consumer-scale platform
+components, applying systematic cross-service correlation methodology to identify
+root-cause patterns across engineering and product boundaries.
+
+Coordinated across engineering, product, and operations teams to document and
+communicate system-level findings, developing structured escalation and
+knowledge-transfer processes for cross-functional audiences.
+```
+
+### What NOT to include
+
+- QA test case execution or defect logging framing
+- Any reference to "testing" as the primary activity
+- Specific QA tooling not relevant to the JD
+
+---
+
 ## Leadership Principles → Non-Amazon Translation
 
 When applying to non-Amazon roles, translate Amazon LP evidence to universal competencies:

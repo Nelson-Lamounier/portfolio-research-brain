@@ -26,7 +26,7 @@ updated: 2026-04-17
 - [[concepts/operational-scripts]] — scripts/local/ diagnostic suite: control-plane-troubleshoot.ts (4-phase, 1737 lines), ssm-automation.ts (dual CWL/API log retrieval), asg-audit.ts (orphan detection), control-plane-autofix.ts (3 runbooks); shared lib (resolveAuth, logger.ts monkey-patch); kb-drift-check.py
 - [[concepts/infra-testing-strategy]] — CDK testing pyramid: 32 unit tests (Template.fromStack, describe.each, negative assertions) + 16 integration tests (SSM anchor, requireParam, beforeAll caching); diagnostic-first failure messages
 - [[concepts/aws-devops-certification-connections]] — DOP-C02 exam domains mapped to real project implementations: Blue/Green↔ArgoRollouts, IaC↔CDK10Stack, DR↔etcd+kubeproxy, Monitoring↔LGTM, Security↔Checkov+OIDC+AROA; SPIDER framework; narrative threads for future article
-- [[concepts/dora-metrics]] — DORA framework reframed for solo developer: Lead Time ~30min, TTSR ~15min, CFR ~2%, on-demand deploy frequency; metric evidence, tracking plan (G1–G8 gaps), architecture maturity ratings
+- [[concepts/dora-metrics]] — DORA metrics (measured 2026-04-17): 13-min frontend lead time, 34 deploys/30 days, 30s alert detection, 25/25 ArgoCD apps; CFR unusable (develop branch WIP noise); RTO/TTSR/MTTR pending; 12 QA gaps; permitted resume claims
 - [[concepts/dynamodb-single-table]] — DynamoDB single-table design: `pk`+`sk` composite key, GSI for status queries (`gsi1pk = ENTITY#<status>`), batch delete pattern, atomicity risks with sequential UpdateItem
 
 ## Tools

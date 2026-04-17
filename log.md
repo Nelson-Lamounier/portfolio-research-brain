@@ -478,3 +478,12 @@ Designed and implemented wiki-mcp: FastMCP HTTP server that exposes the knowledg
 - `wiki/ai-engineering/job-strategist.md` — added `AgentResult<T>` generic, handler type chain, S3 payload offload pattern, Lambda warm-start cache, Zod cold-start validation, code review findings
 - `wiki/ai-engineering/wiki-mcp.md` — updated for TypeScript migration: new stack, `server.getApp()` pattern, Zod tool schemas, Yarn 4 PnP fix, 3-stage Dockerfile, open issues
 - `index.md` — added admin-api, dynamodb-single-table; updated wiki-mcp summary
+
+## [2026-04-17] ingest | dora-metrics-review-2026-04-17
+
+### Sources ingested
+- `raw/dora-metrics-review-2026-04-17.md` — measured DORA metrics, CI/CD pipeline architecture, script references, service inventory, QA gap analysis
+
+### Pages updated
+- `wiki/concepts/dora-metrics.md` — replaced estimates with measured values (13-min lead time, 34 deploys/30 days, 30s alert detection); added CFR interpretation (develop WIP noise); added image delivery flow diagram; added service inventory (25 ArgoCD apps); added script references; replaced 8-gap inventory with 12-gap QA analysis; added permitted resume claims section
+- `index.md` — updated dora-metrics summary line

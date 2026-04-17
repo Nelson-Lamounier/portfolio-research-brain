@@ -155,23 +155,23 @@ The KB spans multiple domains. Agents must treat them as interconnected layers o
 1. Start with the technical description from [[achievements]] bullet templates
 2. Identify which KB domain holds the outcome evidence for that implementation
 3. Cross-reference that domain and append the outcome to close the bullet
-4. Caveat estimates: qualify with "~" and anchor in evidence ("8 test suites", "Golden AMI + SSM Automation")
+4. Use only concrete values from the KB. Never qualify a metric with "~", "estimated", "approximately", or "(est.)". If no measured value exists in the KB, use a qualitative outcome instead ("zero manual intervention", "eliminated config drift").
 
 **Outcome-closed bullet format:**
-> "[Strong verb] [specific technology + implementation detail], [outcome from the relevant KB domain (~estimated)]"
+> "[Strong verb] [specific technology + implementation detail], [concrete outcome from KB domain]"
 
 **Cross-domain outcome lookup:**
 
 | Implementation | KB domain to cross-reference | Outcome to append |
 |---|---|---|
-| Kubernetes cluster / ArgoCD / GitOps | [[concepts/dora-metrics]], [[tools/argocd]] | ~15 min TTSR; self-heal reverts within 3 min; on-demand deploy frequency |
-| CI/CD pipeline / GitHub Actions | [[concepts/dora-metrics]], [[concepts/ci-cd-pipeline-architecture]] | ~30 min lead time; ~5 min SSM-only; ~2% CFR |
-| IaC / CDK / test assertions | [[concepts/infra-testing-strategy]], [[concepts/dora-metrics]] | 265+ assertions, 8 suites, ~2% CFR, test-to-code ratio 1:0.47 |
-| Golden AMI / EC2 boot | [[tools/ec2-image-builder]], [[concepts/dora-metrics]] | Boot time 75% reduction: 12 min to 3 min; TTSR ~15 min |
-| SSM Automation / bootstrap | [[tools/aws-ssm]], [[concepts/dora-metrics]] | Stack failure MTTR: ~30 min to ~5 min |
-| Observability stack | [[concepts/observability-stack]], [[concepts/dora-metrics]] | 13 dashboards, 12 scrape jobs, MTTR ~15 min |
+| Kubernetes cluster / ArgoCD / GitOps | [[concepts/dora-metrics]], [[tools/argocd]] | self-heal reverts within 3 min; on-demand deploy frequency; [TTSR: replace with measured value] |
+| CI/CD pipeline / GitHub Actions | [[concepts/dora-metrics]], [[concepts/ci-cd-pipeline-architecture]] | two-pipeline split (infra validation → compute deploy); [lead time: replace with measured job duration]; [CFR: replace with measured value] |
+| IaC / CDK / test assertions | [[concepts/infra-testing-strategy]], [[concepts/dora-metrics]] | 265+ assertions, 8 suites, test-to-code ratio 1:0.47; [CFR: replace with measured value] |
+| Golden AMI / EC2 boot | [[tools/ec2-image-builder]], [[concepts/dora-metrics]] | Boot time 75% reduction: 12 min to 3 min; [TTSR: replace with measured value] |
+| SSM Automation / bootstrap | [[tools/aws-ssm]], [[concepts/dora-metrics]] | Stack failure recovery decoupled from full redeployment; [MTTR: replace with measured value] |
+| Observability stack | [[concepts/observability-stack]], [[concepts/dora-metrics]] | 13 dashboards, 12 scrape jobs; [MTTR: replace with measured value] |
 | AI engineering | [[ai-engineering/*]] | ~90% prompt cache cost reduction; 4 production systems |
-| Disaster recovery | [[concepts/disaster-recovery]] | ~5–8 min RTO, etcd + PKI backup to S3 |
+| Disaster recovery | [[concepts/disaster-recovery]] | etcd + PKI backup to S3; [RTO: replace with timed etcd restore from S3 — run `etcdctl snapshot restore`, measure wall-clock time from trigger to healthy control plane] |
 
 Never output "Built X using Y and Z" without an outcome. If no KB metric applies, use a qualitative outcome: "zero manual intervention", "eliminated config drift", "no dropped cases during transition".
 
@@ -215,8 +215,19 @@ A bullet that names a technology not mentioned in the job description and not in
 
 Examples for TSE / GKE-focused roles:
 - Drop: "Serverless REST APIs" (Lambda/API Gateway — not Kubernetes, not customer support)
-- Drop or move to bottom: "ECS container hardening" (ECS is not GKE; if kept, position last)
-- Drop: "FinOps cost optimisation" (not in TSE JD)
+- Drop: "ECS container hardening" (ECS is not GKE)
+- Drop: "FinOps cost optimisation / CloudTrail / Cost Explorer / Trusted Advisor / idle EBS volumes" (not in TSE JD)
+
+**Experience section pre-flight checklist for TSE roles — run before outputting any experience section:**
+
+1. AWS section bullet order: (1) customer-facing escalation triage, (2) service continuity lead, (3) scripted automation / Python/Bash — specifically "eliminating 10–20 hours/week of manual case distribution overhead", (4) KB documentation — present but tightened to the shortest version.
+2. KB documentation bullet constraint: the HTML/CSS/JavaScript internal knowledge base bullet must be the shortest bullet in the section. If it is currently the longest, trim it. Maximum 25 words.
+3. Freelance / Self-Directed title: MUST be "Self-Directed Platform Engineer". NEVER "Freelance Software Engineer". See [[career-history]] Freelance section.
+4. Freelance section deduplication: CI/CD pipeline and container hardening must not be restated in full if already present in Key Achievements. Apply the one-clause maximum rule. See [[career-history]] Freelance deduplication enforcement.
+5. Serverless REST API bullet (Lambda/API Gateway/DynamoDB/HMAC): REMOVE from Freelance for TSE roles.
+6. Cost analysis bullet (CloudTrail/Cost Explorer/Trusted Advisor/idle EBS): REMOVE from AWS section for TSE roles.
+7. Meta/Accenture role: frame as distributed systems investigation and cross-functional collaboration. NEVER as QA operations. See [[career-history]] Meta/Accenture section.
+8. Em dash in mid-sentence position: scan every bullet. Replace any "— applying", "— using", "— enabling", "— providing" construction with a comma or restructure as a new clause. Em dash is permitted only in date ranges and role/company separators.
 
 **Implementation variant selection — pick the version that matches the JD context:**
 
@@ -231,13 +242,13 @@ When the same capability exists in multiple implementations (e.g. observability 
 Never default to the Docker Compose version for a Kubernetes-focused role. The agent must read the JD context before selecting which implementation to cite.
 
 **Numbers that are safe to claim directly:**
-- 20+ ArgoCD-managed applications (not "5 workloads + 4 platform" — that is outdated)
+- 25 ArgoCD-managed applications, 25/25 healthy (measured 2026-04-17 — use "25" not "20+")
 - 4 AWS accounts (dev/staging/prod/management)
 - 4 Bedrock AI applications (article pipeline, job strategist, chatbot, self-healing agent)
 - 265+ CDK test assertions
 - 22+ GitHub Actions workflows
 - ~90% prompt cache cost reduction (Writer Lambda only — scoped to that Lambda)
-- ~30 min lead time, ~15 min TTSR, ~2% CFR (DORA estimates, not measured dashboards — say "~")
+- DORA metrics (lead time, TTSR, CFR): DO NOT use these until real measured values replace this line. Omit entirely if no concrete value exists in [[concepts/dora-metrics]]. A hedged number signals an unmeasured system.
 
 ---
 
@@ -247,6 +258,22 @@ Never default to the Docker Compose version for a Kubernetes-focused role. The a
 2. Maximum **2 projects** per resume. Select the 2 most relevant to the job description.
 3. For each project, apply the same role-type ordering as Key Achievements — lead with the technology most relevant to the job description.
 4. Use the implementation variant that matches the JD context (see implementation variant selection rule in the Achievement Bullets section above).
+
+**Mandatory pre-flight deduplication check — run before writing any project description:**
+
+Before drafting the second project, list every concept, tool, and number already used in Key Achievements. Cross-reference against what you plan to write. Any item that appears in Key Achievements must not be restated in Projects — it may appear as a single passing reference at most.
+
+CI/CD pipeline detail is the most common failure point. If Key Achievements already contains:
+- GitHub Actions workflow count (22+)
+- CDK test assertions (265+)
+- OIDC, Checkov, drift detection, or rollback mechanics
+
+Then the second project description must not re-explain these. The second project earns its place by surfacing detail that Key Achievements cannot carry — architectural decisions, integration patterns, the problem it solved that no other section covers.
+
+**What the second project should do that Key Achievements cannot:**
+- Name the specific architectural constraint that drove the project's design
+- Surface one implementation detail not visible from bullet-format evidence (e.g. the two-pipeline split rationale, the Alloy → Loki ingestion path, the etcd backup trigger mechanism)
+- Close on an outcome scoped to that project specifically — not a number already used elsewhere
 
 **Project framing rule — proactive choice, not gap-filling:**
 
@@ -332,6 +359,15 @@ When the JD targets a GCP-native team (GKE, Anthos, GCP) and GCP direct experien
 
 Container hardening details (image scanning, non-root containers, read-only filesystems, seccomp profiles, network policy enforcement) belong in the **Security subsection only**. Do not repeat them in the Kubernetes subsection. The Kubernetes subsection covers orchestration and operations; the Security subsection covers hardening.
 
+**Skills section depth rule — names only, no explanatory detail:**
+
+The Skills section lists capabilities. It does not explain them. Any implementation detail that duplicates a Key Achievements or experience bullet violates the cross-section deduplication rule and wastes word budget.
+
+- Correct: `container hardening (non-root, read-only fs, seccomp, network policy)`
+- Wrong: `container hardening — image scanning, non-root containers, read-only filesystems, seccomp profiles, and network policy enforcement to restrict lateral movement`
+
+The detail version belongs in the achievement bullet. The skills entry names the concept and the techniques in a parenthetical — one line, no verb, no outcome sentence. If the full detail is already in Key Achievements, the Skills entry must be the short form only.
+
 **Deduplication across subsections — strict:**
 
 Before outputting the Skills section, scan all subsections for repeated terms. Each tool or concept may appear once only. Remove every duplicate — keep the instance in the most JD-relevant subsection.
@@ -370,12 +406,14 @@ Before finalising the Core Value paragraph:
 3. Attach the outcome to the tool mention — never list a tool without its outcome in a cover letter.
 
 Wrong: "ArgoCD managing 20+ applications with self-healing and drift correction"
-Right: "ArgoCD managing 20+ applications — automated rollback to any prior Git state, sub-30-minute recovery from transient node failures (~estimated)"
+Right: "ArgoCD managing 20+ applications — automated rollback to any prior Git state, self-healing reverts within 3 minutes of drift detection"
 
-Other DORA statements available for cover letter use:
-- "~30 min end-to-end lead time via two-pipeline split (infra validation → compute deploy)"
-- "~2% change failure rate against 265+ CDK assertions across 8 test suites"
-- "MTTR reduced from ~30 min to ~5 min via SSM Automation decoupling stack failure recovery from full redeployment"
+DORA statements for cover letter use — only include if a measured value exists in [[concepts/dora-metrics]]:
+- Lead time: [replace with measured GitHub Actions CI + CD job duration]
+- CFR: [replace with measured value from ArgoCD rollback history]
+- MTTR: [replace with timed rollback measurement]
+
+Do not insert any of these statements until the brackets above are replaced with real values. Use qualitative outcomes in the interim: "consistent deployment cadence", "sub-minute drift correction", "infrastructure changes validated against 265+ assertions before deploy".
 
 **GCP onboarding — evidence gate (cover letters):**
 
@@ -437,7 +475,8 @@ These rules prevent AI-detection tools from flagging the output and ensure the t
    - Wrong: "Built a self-managed cluster — kubeadm, Calico CNI — no managed abstractions."
    - Right: "Built a self-managed cluster via kubeadm with Calico CNI, no managed service abstractions."
 10. **Professional Summary opener — NEVER cert-first.** "Certified X" or "AWS Certified X" as the first words violates the voice-library tone profile ("Action-first, not title-first"). The first sentence MUST be a role identity statement derived from the JD signal quick-map above. The certification belongs in sentence 2 or later.
-10. **Professional Summary word count: 113–120 words exactly.** See word count budget table. Count before outputting. Trim or expand to land within this range.
+11. **Professional Summary word count: 100 words maximum.** Count before outputting. Trim to fit. Never exceed 100 words.
+12. **Professional Summary closing sentence — DORA metric required.** The final sentence of the summary must contain one concrete DORA-flavoured number from [[concepts/dora-metrics]]. Do not close on a gap bridge, a GCP mention, or a general differentiator. Close on a delivery metric. If no measured value exists in the KB, close on the next best concrete number (265+ CDK assertions, 13 dashboards, 20+ ArgoCD applications) — but a delivery metric is always preferred.
 
 ---
 
@@ -447,7 +486,7 @@ Count words before outputting any section. Trim before returning. These are maxi
 
 | Section | Limit | Notes |
 |---|---|---|
-| Professional Summary | **113–120 words** | Exact range — not a maximum. Count and adjust. |
+| Professional Summary | **100 words max** | Hard ceiling. Count before returning. Trim to fit. Must close on a DORA metric or concrete delivery number. |
 | Experience (all roles combined) | **370 words max** | Distribute across roles by recency and relevance; most recent role gets the most words |
 | Skills | **150 words max** | Subsection headers count toward the total |
 | Key Projects (both combined) | **160 words max** | 80 words per project is a reasonable split |
@@ -461,7 +500,7 @@ After generating all sections, sum the word counts. If the total exceeds 880:
 1. Trim Experience first — cut the least JD-relevant bullet from the oldest role.
 2. Trim Skills second — remove any tool that is not in the JD's top 5 requirements.
 3. Trim Projects third — shorten the less JD-relevant project by one sentence.
-4. Never trim the Summary below 113 words or the Key Achievements below 3 bullets.
+4. Never trim the Key Achievements below 3 bullets. The Summary has a 100-word ceiling with no floor — trim as needed, but the closing DORA metric sentence must survive.
 
 Do not generate and return an over-budget resume. The word count check is a required pre-flight step, not an optional post-process.
 
@@ -482,6 +521,8 @@ These are absolute — not suggestions:
 9. **NEVER claim Commander.js CLI** — justfile task runner + TypeScript scripts.
 10. **ALWAYS add scope qualifier in experience bullets** — "solo-operated" or "self-managed" prevents overclaiming enterprise scale. Required in experience bullets only.
     **BANNED in both Professional Summary AND Skills section:** never write "portfolio-scale" or "portfolio scale" in either location. In the summary, technical specifics (kubeadm, Calico CNI, ArgoCD, 265+ CDK test assertions) carry the signal. In the skills section, specificity of tools carries the signal. "Portfolio scale" in either location signals hobby project and cancels the credibility built by the detail around it. Let the tools speak.
+11. **NEVER claim "AWS Solutions Architect" or any AWS certification other than `AWS Certified DevOps Engineer – Professional`.** The only AWS certification held is `AWS Certified DevOps Engineer – Professional` (2025). Any other AWS credential — Solutions Architect Associate, Solutions Architect Professional, Developer Associate, SysOps Administrator — is a fabrication. A recruiter who checks Credly in the first 60 seconds will see only the DevOps Professional certification. Inventing a credential at the top of the resume is an immediate disqualification.
+    **Profile title field rule:** the `profile.title` field must contain a role descriptor, not a credential string. Permitted examples: "Cloud Infrastructure Engineer", "DevOps Engineer", "Platform Engineer". Never write a certification name as a job title. The certification belongs in the `certifications` array and once in the summary body, nowhere else.
 
 ---
 
