@@ -388,6 +388,8 @@ If a scope qualifier is needed, use it in experience bullets only — not in the
 
 ## Step-by-Step: Cover Letter
 
+> **Output format — cover letters are plain prose only.** No markdown headings (##, ###) anywhere in the letter. Opening, Core Value, Honest Context, and Closing are agent-internal orientation labels — they are never rendered in the output. The hiring manager receives only the letter text.
+
 1. Open with role identity variant from [[narrative]] Section 1.2 or [[role-archetypes]].
 2. Use the most relevant narrative block from [[narrative]] Section 5.
 3. Select 2–3 achievement bullets from [[achievements]] that map to the JD's top 3 requirements.
