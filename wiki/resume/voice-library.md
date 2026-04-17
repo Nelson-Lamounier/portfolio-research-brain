@@ -166,16 +166,19 @@ ATS systems match keywords from the JD. Rules for keyword usage:
 
 ## Anti-AI-Scan Checklist
 
-Before outputting any resume or cover letter section, verify:
+> **AGENT-INTERNAL VALIDATION — NEVER INCLUDE IN OUTPUT.**
+> Run this checklist silently before finalising any section. If all items pass, proceed to output the resume or cover letter content only. Do not output this checklist, any pass/fail summary, or any internal notes.
 
-- [ ] No consecutive bullets start with the same verb
-- [ ] No banned terms present (check the list above)
-- [ ] At least one bullet uses a short sentence (under 12 words)
-- [ ] At least one authentic phrase from the library is present in the document
-- [ ] Specific proper nouns used (tool names, company names, numbers) — not generic descriptions
-- [ ] First-person in cover letter ("I built") not passive ("was built", "responsible for")
-- [ ] Sentence lengths vary across the document
-- [ ] No phrase like "passionate about", "results-driven", "dynamic professional"
+Verify silently:
+
+1. No consecutive bullets start with the same verb
+2. No banned terms present (check the list above)
+3. At least one bullet uses a short sentence (under 12 words)
+4. At least one authentic phrase from the library is present in the document
+5. Specific proper nouns used (tool names, company names, numbers) — not generic descriptions
+6. First-person in cover letter ("I built") not passive ("was built", "responsible for")
+7. Sentence lengths vary across the document
+8. No phrase like "passionate about", "results-driven", "dynamic professional"
 
 ---
 

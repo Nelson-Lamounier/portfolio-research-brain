@@ -218,7 +218,7 @@ Examples for TSE / GKE-focused roles:
 - Drop: "ECS container hardening" (ECS is not GKE)
 - Drop: "FinOps cost optimisation / CloudTrail / Cost Explorer / Trusted Advisor / idle EBS volumes" (not in TSE JD)
 
-**Experience section pre-flight checklist for TSE roles — run before outputting any experience section:**
+**Experience section pre-flight — AGENT-INTERNAL ONLY. Run silently. Do not include this list in any output.**
 
 1. AWS section bullet order: (1) customer-facing escalation triage, (2) service continuity lead, (3) scripted automation / Python/Bash — specifically "eliminating 10–20 hours/week of manual case distribution overhead", (4) KB documentation — present but tightened to the shortest version.
 2. KB documentation bullet constraint: the HTML/CSS/JavaScript internal knowledge base bullet must be the shortest bullet in the section. If it is currently the longest, trim it. Maximum 25 words.
@@ -259,7 +259,7 @@ Never default to the Docker Compose version for a Kubernetes-focused role. The a
 3. For each project, apply the same role-type ordering as Key Achievements — lead with the technology most relevant to the job description.
 4. Use the implementation variant that matches the JD context (see implementation variant selection rule in the Achievement Bullets section above).
 
-**Mandatory pre-flight deduplication check — run before writing any project description:**
+**Mandatory pre-flight deduplication check — AGENT-INTERNAL ONLY. Run silently before writing any project description. Do not include this check or its output in the resume.**
 
 Before drafting the second project, list every concept, tool, and number already used in Key Achievements. Cross-reference against what you plan to write. Any item that appears in Key Achievements must not be restated in Projects — it may appear as a single passing reference at most.
 
@@ -454,6 +454,8 @@ Applicant Tracking Systems score resumes before a human reads them. All generate
 ---
 
 ## Human-Written Output Rules
+
+> **Output boundary:** The final output is the resume or cover letter document ONLY. Never include pre-flight checklists, validation summaries, internal notes, section headers from this KB, or any agent reasoning in the output. All checklists and pre-flight steps are run silently before writing — they do not appear in the document the hiring manager receives.
 
 These rules prevent AI-detection tools from flagging the output and ensure the text reads authentically:
 
