@@ -4,7 +4,7 @@ type: resume
 tags: [resume, gaps, honesty, boundaries, devops, ai-engineering]
 sources: [raw/kubernetes_infrastructure_audit_16_04.md, raw/resume-domain.md, raw/self_healing_design_review.md, raw/chatbot_system_design_review.md, raw/article_pipeline_design_review.md]
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-17
 authority: raw/resume-domain.md supersedes audit-derived entries — codebase scan wins over assumptions
 ---
 
@@ -80,6 +80,20 @@ Do NOT claim these — they are not in the portfolio:
 - **Formal SLOs** — Grafana alerting and SNS notifications are configured but error budgets and burn-rate alerts are not defined. Alerting is threshold-based. Say "threshold-based alerting with SNS" not "SLO-based error budgets"
 - **Commander.js CLI** — operational scripts use `justfile` task runner + TypeScript. Do NOT claim Commander.js CLI experience.
 - **GCP / GKE / Google Cloud** — AWS-native portfolio; Kubernetes skills transfer but no GCP hands-on
+  - **GCP onboarding status: IN_PROGRESS — evidence required before claiming.**
+    Agent instruction: This rule is an instance of the general evidence gate below — apply it to GCP and to any other IN_PROGRESS technology gap.
+
+**General evidence gate — applies to all IN_PROGRESS gap entries:**
+
+When a technology or platform has status IN_PROGRESS, agents must verify evidence before generating claims:
+
+| Evidence available | What agent may say |
+|---|---|
+| Confirmed activity in KB, codebase, or committed config | Name the specific confirmed activities only |
+| "Actively pursuing" / "actively onboarding" language with no confirmed activity | "I am actively beginning [technology] onboarding" — no specific completed activities |
+| No evidence of any kind | Do not mention the technology in forward-looking context |
+
+The risk is symmetric across all technologies: a candidate who lists specific completed activities that cannot be verified will be exposed in the first technical screen — regardless of which platform or tool is named. Do not generate aspirational specifics. Use the hedged form until evidence is confirmed and documented in the KB.
 - **Large-scale multi-node clusters** — self-hosted dual-pool cluster (general t3.small 1–4, monitoring t3.medium 1–2). Do NOT say "enterprise-scale cluster operations" or "100+ node clusters"
 
 ## What Was Built That's Unusual

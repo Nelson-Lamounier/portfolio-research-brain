@@ -74,7 +74,32 @@ Canonical achievement statements grounded in implementation evidence. Each entry
 
 Agents: adapt these per role. Fill `[CONTEXT]` with job-relevant framing. Preserve numbers. Remove scope qualifiers only if the JD explicitly asks for portfolio projects.
 
-### Platform / Infrastructure
+### Kubernetes / TSE / SRE / Container Operations
+
+[CONTEXT: select for JD requiring Kubernetes, container operations, cluster debugging, GKE, EKS, AKS, TSE, SRE, solutions engineer, or infrastructure support roles]
+
+```
+Self-hosted Kubernetes cluster via kubeadm on AWS EC2 — bootstrapped control plane
+from scratch, configured Calico CNI for pod networking with namespace-level
+NetworkPolicies, ArgoCD App-of-Apps GitOps delivery (20+ applications) with
+self-healing and drift correction, Traefik v3 ingress with cross-namespace routing
+and middleware chains, etcd and PKI backup to S3 with ~5–8 min control-plane RTO.
+[CONTEXT: exposes control-plane internals that [managed K8s service from JD] abstracts]
+
+Kubernetes-native observability: Prometheus scraping pod metrics via ServiceMonitors,
+Loki collecting container logs from Kubernetes nodes, Tempo distributed tracing across
+services via gRPC/OTLP ingestion, 13 Grafana dashboards provisioned via ConfigMaps —
+cross-subnet scrape targets, DNS-based service discovery, all deployed as GitOps-managed
+Kubernetes workloads. [CONTEXT: replace Docker Compose version for K8s/TSE roles]
+
+Cluster Autoscaler with multi-pool ASG configuration — general-purpose and monitoring
+node pools with independent scaling policies; currently migrating to dedicated
+infrastructure nodegroup (in progress). [CONTEXT: use "architectural evolution" framing]
+```
+
+### Platform / Infrastructure / IaC
+
+[CONTEXT: select for JD requiring IaC, CDK, platform engineering, multi-account AWS, infrastructure automation, DevOps, or cloud engineering roles]
 
 ```
 Designed 10-stack CDK architecture (VPC, security groups, compute, IAM, observability,
@@ -90,6 +115,8 @@ improving cluster TTSR from ~24 min to ~15 min.
 
 ### SRE / Operations
 
+[CONTEXT: select for JD requiring SRE, reliability engineering, DORA metrics, incident response, self-healing infrastructure, or disaster recovery roles]
+
 ```
 Achieved DORA-class delivery metrics solo: ~30 min lead time, ~15 min TTSR,
 ~2% change failure rate — measured against 8 test suites and 265+ CDK assertions.
@@ -102,19 +129,29 @@ Designed disaster recovery path: etcd + PKI backup to S3, TLS/JWT to SSM, full
 control-plane reconstruction in ~5–8 min RTO.
 ```
 
-### Full-Stack
+### Full-Stack / TypeScript / System Design
+
+[CONTEXT: select for JD requiring TypeScript, full-stack delivery, system design, React, Next.js, frontend engineering, or product engineering roles]
 
 ```
-Built Yarn 4 monorepo with two production-pattern applications: Next.js 15 public
-site and TanStack Start admin dashboard — OTel traces, Prometheus metrics, Faro RUM,
-Cognito PKCE auth, 4-stage Docker builds, Blue/Green deployments via Argo Rollouts.
+Designed and built a Yarn 4 TypeScript monorepo with two production-pattern
+applications: Next.js 15 public site and TanStack Start admin dashboard.
+System design decisions: Cognito PKCE auth flow, type-safe RPC via
+createServerFn (12 server modules, zero API contract drift), full CSP headers,
+OTel distributed traces, Prometheus metrics, Faro RUM, Vitest test coverage,
+4-stage Docker builds, Blue/Green deployments via Argo Rollouts.
+[CONTEXT: TypeScript / full-stack / system design / React / frontend roles]
 
-Implemented type-safe RPC layer using TanStack Start createServerFn — 12 server
-modules, full CSP, Vitest test coverage, zero API contract drift between client
-and server.
+Implemented a REST API backend with HMAC token verification, DynamoDB
+single-table design, Lambda function architecture, dead-letter queue error
+handling, and API Gateway request validation — type-safe end-to-end with
+OpenAPI-style contract enforcement.
+[CONTEXT: backend / API design / serverless / system design roles]
 ```
 
-### AI / ML Engineer
+### AI / ML Engineering
+
+[CONTEXT: select for JD requiring AI, LLM, Bedrock, agent orchestration, RAG, ML engineering, or AI-augmented systems roles]
 
 ```
 Designed and implemented three production-pattern LLM systems on AWS Bedrock:

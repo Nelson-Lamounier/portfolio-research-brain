@@ -4,7 +4,7 @@ type: resume
 tags: [resume, agents, guide, confidence, framing, devops, ai-engineering]
 sources: [raw/resume-domain.md]
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-17T18:30
 ---
 
 # Agent Guide — Resume Generation
@@ -31,11 +31,33 @@ See [[concept-library]] for each concept's status.
 
 ## Step-by-Step: Resume Summary
 
+> **Abbreviation used throughout this page:** "JD" = job description (the full text of the role posting being applied to).
+
 1. Read [[narrative]] → Section "One-Sentence Positioning" as the foundation.
 2. Identify role type from the JD → select the matching variant from [[narrative]] "Role Identity Variants" or [[role-archetypes]] archetype selector.
 3. If JD values both infra and product delivery → use the unified narrative from [[narrative]] "The Unified Story".
 4. If JD mentions SRE or reliability → include the Support-to-DevOps transition narrative from [[narrative]].
 5. Never use a concept whose status is ABSENT or PARTIAL without the `recommended_framing`.
+
+**Summary content filter — strict:**
+
+The Professional Summary must only contain concepts that either:
+1. Appear in the JD (exact term or close synonym), OR
+2. Are tier-1 differentiators for the role type (see quick-map below)
+
+Concepts present in the KB or original resume but absent from the JD are **silently excluded from the summary**. They belong in the Skills section (for ATS keyword coverage) or experience bullets (for evidence) — never in the summary.
+
+Examples of concepts to exclude from the summary when the JD doesn't mention them:
+
+| Concept | Exclude from summary when JD doesn't mention |
+|---|---|
+| FinOps / cost optimisation | JD doesn't say "cost", "FinOps", "billing" |
+| Policy-as-code | JD doesn't say "OPA", "policy", "compliance automation" |
+| AI / Bedrock pipelines | JD doesn't say "AI", "LLM", "Bedrock", "agent" |
+| DORA metrics | JD doesn't say "DORA", "MTTR", "lead time", "reliability" |
+| Multi-account IaC | JD doesn't say "IaC", "CDK", "multi-account" |
+
+The summary is for the human reader who has 10 seconds. Every sentence must earn its place by mapping to a JD requirement or a role-type differentiator.
 
 **JD Signal → Narrative variant quick-map:**
 
@@ -47,6 +69,59 @@ See [[concept-library]] for each concept's status.
 | "LLM", "AI", "Bedrock", "agent", "RAG" | AI-augmented engineering narrative |
 | "DevOps", "CI/CD", "pipelines", "cloud native" | Platform + delivery narrative |
 | "staff", "principal", "architect" | Mix all three acts — show breadth |
+| "troubleshoot", "customer", "solutions engineer", "escalation", "TSE", "technical support", "support depth" | Customer-facing infrastructure narrative — see opener pattern below |
+
+**Customer-facing infrastructure opener pattern (TSE / Solutions Engineer / Support roles):**
+
+> "Cloud infrastructure engineer with [N] years triaging enterprise [IAM / VPC / container networking / specific domain] escalations at AWS — debugging across [layer 1], [layer 2], and [layer 3] for production customer environments. [Cert name] certified. [Portfolio differentiator sentence.]"
+
+Rules for this variant:
+- **NEVER open with the certification name.** The voice-library tone profile mandates "Action-first, not title-first". The cert is sentence 2 or later.
+- The first sentence establishes role identity (what Nelson did) + the customer-facing depth (3 years, enterprise escalations, AWS scale).
+- Sentence 2: certification verbatim — `AWS Certified DevOps Engineer – Professional`.
+- Sentence 3+: the portfolio differentiator most relevant to the job description (Kubernetes depth, IaC, observability, AI pipelines).
+- If the job description explicitly values both support depth AND infrastructure building → include the dual-perspective line: "built the platform AND triaged production failures on it — both sides inform every design decision."
+
+**Summary structure when a gap must be acknowledged (e.g. platform unfamiliarity):**
+
+The summary must close on a strength, not a gap. Ending on the gap is the last thing a recruiter reads before moving on — it anchors the impression on the weakness.
+
+Correct structure:
+1. Role identity + depth claim (sentence 1)
+2. Certification + evidence (sentence 2)
+3. Gap bridge — honest, one sentence, forward-looking (sentence 3, middle)
+4. Portfolio differentiator — the strongest signal for this role (closing sentence)
+
+Example for a role where the candidate lacks platform X:
+> "[Role identity + depth]. [Cert]. [Platform X] ramp-up is an active onboarding objective; [cloud/infra fundamentals] transfer directly. [Strongest portfolio differentiator for this role]."
+
+Never end on: "X is a gap I am working on", "I am actively pursuing Y", or any framing that puts the gap as the final word.
+
+**kubeadm differentiator for TSE / Kubernetes roles — MUST articulate the WHY:**
+
+Naming "kubeadm" without context is weak. The differentiator is the insight it signals:
+> "kubeadm exposes control plane internals — etcd, kube-apiserver, kubelet, Calico CNI — that managed Kubernetes services abstract away. That is the layer that breaks in production customer escalations."
+
+When the JD mentions Kubernetes, container debugging, or cluster operations, the summary or relevant bullet MUST include the "why kubeadm matters here" framing, not just the tool name.
+
+**Use the managed service name from the JD — never hardcode one:**
+
+| JD mentions | Managed service to name in framing |
+|---|---|
+| "GKE", "Google Kubernetes Engine", "Anthos" | GKE |
+| "EKS", "Amazon EKS", "Elastic Kubernetes Service" | EKS |
+| "AKS", "Azure Kubernetes Service" | AKS |
+| No specific service named | "managed Kubernetes services" |
+
+Apply this to the framing templates:
+
+| JD context | Framing to use |
+|---|---|
+| Managed K8s customer escalations (JD-specific service) | "kubeadm-built cluster exposes the control-plane internals [JD managed service] abstracts — the same layer that surfaces in production customer escalations" |
+| Kubernetes internals / container runtime debugging | "bootstrapped control plane from scratch via kubeadm — etcd operations, kubelet config, Calico CNI pod networking — no managed service abstractions" |
+| Infrastructure depth / hands-on ops | "built and operated the cluster, not just deployed workloads onto it — both sides of the failure surface" |
+
+The differentiator is not "I used kubeadm". It is: "I chose kubeadm deliberately to learn the layer that managed services hide — and that layer is exactly what breaks in production."
 
 ---
 
@@ -59,6 +134,102 @@ See [[concept-library]] for each concept's status.
 5. For ABSENT concepts → do not generate a bullet.
 6. Preserve all numbers — never round or estimate beyond what's in [[achievements]].
 
+**Addition 2 — Cross-domain instruction: the KB is one connected intelligence system**
+
+The KB spans multiple domains. Agents must treat them as interconnected layers of a single evidence base, not independent documents:
+
+| Domain | What it provides |
+|---|---|
+| [[achievements]] | Canonical numbers, bullet templates, scope qualifiers |
+| [[concepts/dora-metrics]] | Delivery performance outcomes: lead time, MTTR, CFR, deploy frequency |
+| [[concepts/infra-testing-strategy]] | Test coverage depth: 265+ assertions, 8 suites, test-to-code ratio |
+| [[concepts/ci-cd-pipeline-architecture]] | Pipeline timing, workflow count, two-pipeline split evidence |
+| [[concepts/self-hosted-kubernetes]] | Control plane implementation detail, node pool config, networking |
+| [[concepts/observability-stack]] | Dashboard count, scrape jobs, stack architecture |
+| [[concepts/disaster-recovery]] | RTO numbers, backup strategy, recovery path |
+| [[tools/*]] | Tool-specific implementation depth (ArgoCD, Calico, Traefik, etc.) |
+| [[ai-engineering/*]] | AI system design, inference techniques, cost metrics |
+
+**Every bullet describing a technical implementation MUST close with an outcome.** "Built X using Y" is incomplete. The workflow:
+
+1. Start with the technical description from [[achievements]] bullet templates
+2. Identify which KB domain holds the outcome evidence for that implementation
+3. Cross-reference that domain and append the outcome to close the bullet
+4. Caveat estimates: qualify with "~" and anchor in evidence ("8 test suites", "Golden AMI + SSM Automation")
+
+**Outcome-closed bullet format:**
+> "[Strong verb] [specific technology + implementation detail], [outcome from the relevant KB domain (~estimated)]"
+
+**Cross-domain outcome lookup:**
+
+| Implementation | KB domain to cross-reference | Outcome to append |
+|---|---|---|
+| Kubernetes cluster / ArgoCD / GitOps | [[concepts/dora-metrics]], [[tools/argocd]] | ~15 min TTSR; self-heal reverts within 3 min; on-demand deploy frequency |
+| CI/CD pipeline / GitHub Actions | [[concepts/dora-metrics]], [[concepts/ci-cd-pipeline-architecture]] | ~30 min lead time; ~5 min SSM-only; ~2% CFR |
+| IaC / CDK / test assertions | [[concepts/infra-testing-strategy]], [[concepts/dora-metrics]] | 265+ assertions, 8 suites, ~2% CFR, test-to-code ratio 1:0.47 |
+| Golden AMI / EC2 boot | [[tools/ec2-image-builder]], [[concepts/dora-metrics]] | Boot time 75% reduction: 12 min to 3 min; TTSR ~15 min |
+| SSM Automation / bootstrap | [[tools/aws-ssm]], [[concepts/dora-metrics]] | Stack failure MTTR: ~30 min to ~5 min |
+| Observability stack | [[concepts/observability-stack]], [[concepts/dora-metrics]] | 13 dashboards, 12 scrape jobs, MTTR ~15 min |
+| AI engineering | [[ai-engineering/*]] | ~90% prompt cache cost reduction; 4 production systems |
+| Disaster recovery | [[concepts/disaster-recovery]] | ~5–8 min RTO, etcd + PKI backup to S3 |
+
+Never output "Built X using Y and Z" without an outcome. If no KB metric applies, use a qualitative outcome: "zero manual intervention", "eliminated config drift", "no dropped cases during transition".
+
+**Key Achievements section limits — hard constraints:**
+
+- Maximum **4 bullets**. Select the 4 most relevant to the job description. Drop the rest.
+- Maximum **100 words total** across all 4 bullets. See word count budget table. Count before outputting. Trim to fit.
+- Each bullet must stand alone — no preamble, no section header sentence.
+
+**Achievement bullet ordering rule — role-type driven, not optional:**
+
+Determine the role type from the job description before selecting or ordering any bullets. Apply the matching rule below exactly.
+
+**Infrastructure / support roles** (TSE, SRE, Platform Engineer, Solutions Engineer, DevOps Engineer):
+
+1. Kubernetes operational bullets first (kubeadm, Calico CNI, ArgoCD self-healing, control plane work)
+2. Customer-facing incident triage second (IAM incident triage, CloudTrail analysis, escalation resolution)
+3. IaC and CI/CD pipeline bullets third (CDK consolidation, OIDC pipelines, drift detection)
+4. Observability fourth — use the Kubernetes-native implementation (Prometheus/Loki/Tempo on K8s), not Docker Compose
+5. Serverless, frontend, and full-stack bullets are **excluded entirely**
+
+**Full-stack / product roles** (Software Developer, Full Stack Engineer, Backend Engineer, Product Engineer):
+
+1. Serverless and API bullets first (Lambda, API Gateway, DynamoDB single-table design)
+2. Frontend or product delivery second (if applicable)
+3. CI/CD and IaC third
+4. Kubernetes operational depth is **de-prioritised** — include only if JD explicitly mentions K8s
+
+**AI / ML engineering roles** (Bedrock, LLM, Agent, RAG):
+
+1. Bedrock AI pipelines first (4 applications, agent orchestration, RAG pipelines)
+2. CI/CD and IaC second
+3. Kubernetes and observability third (supporting infrastructure context only)
+4. Serverless excluded unless it directly supports the AI pipeline
+
+**When the role type is ambiguous:** default to infrastructure ordering and include a note in `analysis_notes` flagging the ambiguity.
+
+**Achievement filtering — drop, do not reorder, bullets that don't map to the JD:**
+
+A bullet that names a technology not mentioned in the job description and not in the top 3 JD requirements occupies space that should go to a relevant bullet. Remove it from the tailored version. It is not a reorder — it is a deletion.
+
+Examples for TSE / GKE-focused roles:
+- Drop: "Serverless REST APIs" (Lambda/API Gateway — not Kubernetes, not customer support)
+- Drop or move to bottom: "ECS container hardening" (ECS is not GKE; if kept, position last)
+- Drop: "FinOps cost optimisation" (not in TSE JD)
+
+**Implementation variant selection — pick the version that matches the JD context:**
+
+When the same capability exists in multiple implementations (e.g. observability as Docker Compose stack vs Kubernetes-native), always select the implementation that matches the JD context:
+
+| JD context | Use this implementation |
+|---|---|
+| Kubernetes / GKE / container ops | Kubernetes-native observability (Prometheus scraping pod metrics, Loki collecting container logs, Tempo tracing across services on the K8s cluster) |
+| General DevOps / platform | Docker Compose 7-container observability stack |
+| Both present in JD | Kubernetes-native; mention Docker Compose only if space allows |
+
+Never default to the Docker Compose version for a Kubernetes-focused role. The agent must read the JD context before selecting which implementation to cite.
+
 **Numbers that are safe to claim directly:**
 - 20+ ArgoCD-managed applications (not "5 workloads + 4 platform" — that is outdated)
 - 4 AWS accounts (dev/staging/prod/management)
@@ -70,6 +241,115 @@ See [[concept-library]] for each concept's status.
 
 ---
 
+## Step-by-Step: Key Projects
+
+1. Select projects from [[achievements]] — see "Project Templates by Role Type" section.
+2. Maximum **2 projects** per resume. Select the 2 most relevant to the job description.
+3. For each project, apply the same role-type ordering as Key Achievements — lead with the technology most relevant to the job description.
+4. Use the implementation variant that matches the JD context (see implementation variant selection rule in the Achievement Bullets section above).
+
+**Project framing rule — proactive choice, not gap-filling:**
+
+Never frame a project as "addressing a lack of X" or "solving a missing Y." This signals the project was reactive. Frame every project as a deliberate architectural decision.
+
+- Wrong: "addressing the lack of unified monitoring across containerised workloads"
+- Right: "Designed a production-grade observability platform implementing metrics, logs, and distributed traces across containerised workloads"
+
+**Cross-section deduplication rule:**
+
+Before finalising any section, check what has already been stated in earlier sections. Each concept, tool, or detail may appear in full only once across the entire resume. Every subsequent mention must add new signal — a deeper implementation detail, a different context, a specific outcome — or be removed entirely.
+
+| Already stated in | Rule for subsequent sections |
+|---|---|
+| Key Achievements | Projects gets one clause maximum for the same concept — no full restatement |
+| Projects | Experience bullets reference it briefly or omit it |
+| Summary | Achievements and Projects do not restate the same framing |
+| Skills section | Experience bullets do not list the same tools again — only use them in evidence sentences |
+
+Apply this to all repeated content including:
+- CI/CD pipeline (OIDC, Checkov, drift detection, rollback) — if in Achievements, Projects gets one clause only
+- Certification names — state once (Summary or Certifications section), do not repeat in bullets
+- Tooling lists (kubectl, ArgoCD, Prometheus, Grafana) — name them in the most relevant bullet, not in every section
+- Numbers (265+ CDK assertions, 20+ ArgoCD apps) — use in the section where they are most impactful, reference briefly elsewhere
+
+The test: if removing the sentence from a section loses no information the reader didn't already have, remove it.
+
+**No low-signal padding:**
+
+Remove any detail that describes systems administration fundamentals rather than engineering decisions. Examples to always remove from project descriptions:
+- "applied Linux file permissions (chmod/chown)" — this is baseline sysadmin, not a differentiator
+- "configured SSH access" — assumed
+- "installed dependencies" — assumed
+
+**Project selection — JD-driven, not role-type lookup:**
+
+Do not use a fixed role-type table. Instead:
+
+1. Read the job description top 3 requirements.
+2. Read all available project templates from [[achievements]] — each template has a `[CONTEXT]` tag describing what role it is relevant for.
+3. Select the 2 project templates whose `[CONTEXT]` tag best matches the job description requirements.
+4. If two projects cover the same technology domain, pick the one with more specific implementation detail.
+
+The agent is responsible for making this match — the KB provides the raw material, the job description provides the filter. Examples of how the match should work:
+
+- JD requires Kubernetes cluster operations → select "Self-hosted Kubernetes cluster via kubeadm"
+- JD requires TypeScript, system design, or full-stack delivery → select "Next.js + TanStack Start monorepo"
+- JD requires AI, LLM, or Bedrock → select "Bedrock AI pipelines"
+- JD requires observability or monitoring in a K8s context → select "Kubernetes-native observability"
+- JD requires observability in a general DevOps context → select "Docker Compose observability stack"
+- JD requires IaC or platform engineering → select "10-stack CDK platform"
+
+If no project in [[achievements]] directly matches a JD requirement, pick the closest by domain and note the gap in `analysis_notes`.
+
+---
+
+## Step-by-Step: Technical Skills
+
+1. Read the JD. Identify the top 3–5 technical domains the role values (e.g. Kubernetes, observability, IaC, scripting, security). These become the first subsections in order.
+2. Order subsections to mirror JD priority — not alphabetically, not breadth-first. The most JD-relevant subsection appears first.
+3. Apply deduplication: each tool or concept appears in **one subsection only**. If a tool fits two categories, place it in the subsection where it is most JD-relevant and omit from all others.
+4. Apply the role-specific additions and constraints below before outputting.
+
+**Subsection ordering rule — explicit examples:**
+
+| JD priority signal | Lead subsection |
+|---|---|
+| Kubernetes, container ops, GKE | Kubernetes & Container Orchestration |
+| IaC, CDK, platform engineering | Cloud Infrastructure & IaC |
+| SRE, reliability, incident response | Observability & Reliability |
+| AI, LLM, Bedrock, agents | AI & ML Engineering |
+| TypeScript, React, full-stack | Languages & Frameworks |
+
+**Scripting / tooling subsection — mandatory for TSE and SRE roles:**
+
+Any resume targeting a TSE, SRE, Support Engineer, or Solutions Engineer role **must** include a scripting/tooling subsection. Minimum content: `bash`, `Python`, `justfile task runner`, `kubectl`, `aws-cli`. This subsection signals operational depth — the ability to triage, automate, and debug without a GUI.
+
+**GKE onboarding signal — infrastructure and support roles:**
+
+When the JD targets a GCP-native team (GKE, Anthos, GCP) and GCP direct experience is absent, add "GKE (actively onboarding)" to the Kubernetes subsection. This is the truthful framing — it acknowledges the gap while signalling active closure. Do not omit it and do not claim full GKE experience.
+
+**Container hardening — placement constraint:**
+
+Container hardening details (image scanning, non-root containers, read-only filesystems, seccomp profiles, network policy enforcement) belong in the **Security subsection only**. Do not repeat them in the Kubernetes subsection. The Kubernetes subsection covers orchestration and operations; the Security subsection covers hardening.
+
+**Deduplication across subsections — strict:**
+
+Before outputting the Skills section, scan all subsections for repeated terms. Each tool or concept may appear once only. Remove every duplicate — keep the instance in the most JD-relevant subsection.
+
+Examples of common duplications to catch:
+- `ArgoCD` in both Kubernetes and CI/CD — keep in Kubernetes for K8s roles, CI/CD for DevOps roles
+- `Prometheus` in both Observability and Kubernetes — keep in Observability
+- `Calico CNI` in both Kubernetes and Security — keep in Kubernetes; mention network policy in Security without repeating the tool name
+- `kubectl` in both Kubernetes and Scripting/Tooling — keep in Scripting/Tooling for TSE roles where operational tooling is the signal
+
+**"portfolio-scale" is banned in the Skills section:**
+
+Do not write "portfolio-scale", "portfolio project", or similar qualifiers inside the Skills section. Skills are capabilities, not scope claims. The scope signal is already carried by the specificity of the tools listed and the evidence in experience bullets. Adding "portfolio-scale" to a skills list signals hobby project and undersells.
+
+If a scope qualifier is needed, use it in experience bullets only — not in the skills list itself.
+
+---
+
 ## Step-by-Step: Cover Letter
 
 1. Open with role identity variant from [[narrative]] Section 1.2 or [[role-archetypes]].
@@ -78,7 +358,46 @@ See [[concept-library]] for each concept's status.
 4. If JD mentions AI tooling → always include Bedrock/AI content (4 applications, STRONG status).
 5. If JD mentions reliability/DORA → include DORA metrics section from [[dora-metrics]].
 6. If JD mentions Kubernetes internals → surface kubeadm depth and control-plane operations.
-7. Close with the dual-perspective differentiator: "built the platform AND deployed production workloads onto it."
+7. Close with the dual-perspective differentiator: "built the platform and deployed production workloads onto it" — no capitalised AND (see Human Writing Rules, anti-AI pattern).
+
+**DORA metrics requirement — cover letters are not exempt from the cross-domain rule:**
+
+The same cross-domain isolation failure that weakens resume bullets applies to cover letters. A cover letter for any infrastructure, SRE, or platform role must contain **at least two DORA-flavoured outcome statements** — not just count metrics (20+ applications, 265+ assertions).
+
+Before finalising the Core Value paragraph:
+1. Cross-reference [[concepts/dora-metrics]] for outcome evidence.
+2. Identify which DORA metric is most relevant to the JD (TTSR for SRE/support roles, lead time for DevOps/platform roles, CFR for roles emphasising quality/reliability).
+3. Attach the outcome to the tool mention — never list a tool without its outcome in a cover letter.
+
+Wrong: "ArgoCD managing 20+ applications with self-healing and drift correction"
+Right: "ArgoCD managing 20+ applications — automated rollback to any prior Git state, sub-30-minute recovery from transient node failures (~estimated)"
+
+Other DORA statements available for cover letter use:
+- "~30 min end-to-end lead time via two-pipeline split (infra validation → compute deploy)"
+- "~2% change failure rate against 265+ CDK assertions across 8 test suites"
+- "MTTR reduced from ~30 min to ~5 min via SSM Automation decoupling stack failure recovery from full redeployment"
+
+**GCP onboarding — evidence gate (cover letters):**
+
+See [[gap-awareness]] GCP section. Do not claim specific GCP activities (GKE cluster deployed, Cloud IAM configured) unless confirmed evidence exists. Use "actively beginning GCP onboarding" if evidence is absent.
+
+**"portfolio-scale" / "solo-operated" ban in cover letters:**
+
+These qualifiers are banned from cover letter body text. In a cover letter, the framing contrast carries the scope signal:
+- Wrong: "Portfolio-scale, solo-operated Kubernetes cluster, designed from first principles"
+- Right: "Designed from first principles, not from a managed control plane" — the contrast implies solo depth without naming it as a limitation
+
+If scope qualification is genuinely needed (e.g. addressing scale directly), use: "self-managed", "independently built and operated", or "built without a managed service abstraction".
+
+**Closing paragraph rule — echo the opening thesis:**
+
+The closing paragraph must loop back to the core framing established in the opening sentence. If the letter opened with an insight about failure-to-recovery, the close must reference it. A close that doesn't echo the opening reads as generic.
+
+Pattern:
+- Opening thesis: "X is the mental model I bring to this role"
+- Closing echo: "That same [X] is what I'd bring to [specific team/role/challenge at this company]"
+
+Never close on a gap or a forward-looking qualifier. Close on the strongest claim in the letter, restated in the language of the role.
 
 ---
 
@@ -108,6 +427,43 @@ These rules prevent AI-detection tools from flagging the output and ensure the t
 6. **Cover letters: first-person direct** — "I built X" not "X was built" or "responsible for building X".
 7. **No opener clichés** — never start a cover letter with "I am writing to express my interest in". Start with the insight or the journey.
 8. **Anti-AI-scan checklist** — before finalising any document, verify all items in [[voice-library]] Anti-AI-Scan Checklist.
+   Additional patterns caught here (not in voice-library yet):
+   - **Capitalised AND for mid-sentence emphasis** — e.g. "built the platform AND deployed workloads onto it". Fully capitalised conjunctions used as emphasis are an AI-generation signal. Use sentence structure to carry the weight instead: "built the platform, then deployed production workloads onto it — both sides of the same failure surface."
+9. **Em dash (—) formatting rule — strict.**
+   - Em dashes are permitted in **two places only**: date ranges (e.g. "2022–2025") and role/company separators (e.g. "Senior Engineer — AWS").
+   - Em dashes used as mid-sentence connectors are **banned** in all generated resume and cover letter text.
+   - Use a comma, full stop, or restructure the sentence instead.
+   - Maximum one em dash per section. Multiple em dashes in a single paragraph is a strong AI-detection signal to experienced recruiters.
+   - Wrong: "Built a self-managed cluster — kubeadm, Calico CNI — no managed abstractions."
+   - Right: "Built a self-managed cluster via kubeadm with Calico CNI, no managed service abstractions."
+10. **Professional Summary opener — NEVER cert-first.** "Certified X" or "AWS Certified X" as the first words violates the voice-library tone profile ("Action-first, not title-first"). The first sentence MUST be a role identity statement derived from the JD signal quick-map above. The certification belongs in sentence 2 or later.
+10. **Professional Summary word count: 113–120 words exactly.** See word count budget table. Count before outputting. Trim or expand to land within this range.
+
+---
+
+## Resume Word Count Budget — Hard Limits
+
+Count words before outputting any section. Trim before returning. These are maximums, not targets.
+
+| Section | Limit | Notes |
+|---|---|---|
+| Professional Summary | **113–120 words** | Exact range — not a maximum. Count and adjust. |
+| Experience (all roles combined) | **370 words max** | Distribute across roles by recency and relevance; most recent role gets the most words |
+| Skills | **150 words max** | Subsection headers count toward the total |
+| Key Projects (both combined) | **160 words max** | 80 words per project is a reasonable split |
+| Key Achievements (all bullets) | **100 words max** | Maximum 4 bullets |
+| Education + Certifications + Profile header | **~80 words** | Structural content — keep compact |
+| **Grand Total** | **~880 words** | Count the full document before returning |
+
+**Enforcement rule for agents:**
+
+After generating all sections, sum the word counts. If the total exceeds 880:
+1. Trim Experience first — cut the least JD-relevant bullet from the oldest role.
+2. Trim Skills second — remove any tool that is not in the JD's top 5 requirements.
+3. Trim Projects third — shorten the less JD-relevant project by one sentence.
+4. Never trim the Summary below 113 words or the Key Achievements below 3 bullets.
+
+Do not generate and return an over-budget resume. The word count check is a required pre-flight step, not an optional post-process.
 
 ---
 
@@ -124,7 +480,8 @@ These are absolute — not suggestions:
 7. **NEVER claim EKS/GKE/AKS** — say "evaluated managed K8s, chose kubeadm for full-stack learning depth."
 8. **NEVER claim fine-tuning or RLHF** — Bedrock API only, no model training.
 9. **NEVER claim Commander.js CLI** — justfile task runner + TypeScript scripts.
-10. **ALWAYS add scope qualifier** — "portfolio-scale", "solo-operated", or "self-managed" unless JD asks otherwise.
+10. **ALWAYS add scope qualifier in experience bullets** — "solo-operated" or "self-managed" prevents overclaiming enterprise scale. Required in experience bullets only.
+    **BANNED in both Professional Summary AND Skills section:** never write "portfolio-scale" or "portfolio scale" in either location. In the summary, technical specifics (kubeadm, Calico CNI, ArgoCD, 265+ CDK test assertions) carry the signal. In the skills section, specificity of tools carries the signal. "Portfolio scale" in either location signals hobby project and cancels the credibility built by the detail around it. Let the tools speak.
 
 ---
 
