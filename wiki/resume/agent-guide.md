@@ -4,7 +4,7 @@ type: resume
 tags: [resume, agents, guide, confidence, framing, devops, ai-engineering]
 sources: [raw/resume-domain.md]
 created: 2026-04-16
-updated: 2026-04-17T18:30
+updated: 2026-04-19
 ---
 
 # Agent Guide — Resume Generation
@@ -70,6 +70,7 @@ The summary is for the human reader who has 10 seconds. Every sentence must earn
 | "DevOps", "CI/CD", "pipelines", "cloud native" | Platform + delivery narrative |
 | "staff", "principal", "architect" | Mix all three acts — show breadth |
 | "troubleshoot", "customer", "solutions engineer", "escalation", "TSE", "technical support", "support depth" | Customer-facing infrastructure narrative — see opener pattern below |
+| "internal tools", "automated frameworks", "operational excellence", "playbooks", "data center", "server operations", "workflow execution", "supply chain software", "process standardisation" | Operations engineering narrative — lead with Python/Bash automation, runbook depth, and systematic root cause methodology. Do NOT lead with CDK or Next.js. |
 
 **Customer-facing infrastructure opener pattern (TSE / Solutions Engineer / Support roles):**
 
@@ -206,6 +207,15 @@ Determine the role type from the job description before selecting or ordering an
 2. CI/CD and IaC second
 3. Kubernetes and observability third (supporting infrastructure context only)
 4. Serverless excluded unless it directly supports the AI pipeline
+
+**Operations Engineering / Internal Tooling roles** (Data Center Software, Server Operations, internal tooling, operational excellence, workflow automation):
+
+1. Python/Bash automation bullets first — case distribution system, ROI analysis, business case. Frame with "currently implementing" if status is IN_PROGRESS, but lead with it — it is the most JD-relevant evidence.
+2. Operational runbooks and knowledge base documentation second — 3 years, multi-team, structured process documentation
+3. Kubernetes operational depth third — bootstrap automation (Step Functions + SSM), recovery decoupling — frame as "backend systems with interdependencies"
+4. Root cause methodology fourth — IAM, VPC, compute, networking triage, cross-layer log correlation
+5. Serverless, frontend, and full-stack bullets are **excluded entirely**
+6. CDK architecture bullets are **de-prioritised** — include only as supporting context for automation depth, not as the lead
 
 **When the role type is ambiguous:** default to infrastructure ordering and include a note in `analysis_notes` flagging the ambiguity.
 
@@ -346,6 +356,7 @@ If no project in [[achievements]] directly matches a JD requirement, pick the cl
 | SRE, reliability, incident response | Observability & Reliability |
 | AI, LLM, Bedrock, agents | AI & ML Engineering |
 | TypeScript, React, full-stack | Languages & Frameworks |
+| Internal tools, data center, operational excellence, workflow automation, scripting | Scripting & Operational Tooling — Python first, then Bash, then AWS CLI, then Kubernetes operational tools. Frontend Development moves to bottom or is omitted entirely. |
 
 **Scripting / tooling subsection — mandatory for TSE and SRE roles:**
 

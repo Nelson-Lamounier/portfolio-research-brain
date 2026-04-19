@@ -1,10 +1,10 @@
 ---
 title: Role Archetypes
 type: resume
-tags: [resume, role, archetypes, devops, sre, full-stack, ai-engineering, platform]
+tags: [resume, role, archetypes, devops, sre, full-stack, ai-engineering, platform, operations-engineering, internal-tooling]
 sources: [raw/kubernetes_infrastructure_audit_16_04.md]
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-19
 ---
 
 # Role Archetypes
@@ -182,6 +182,73 @@ lifecycle expiration.
 
 ---
 
+## Archetype 6: Operations Engineering / Internal Tooling
+
+**Triggered when JD contains any of:**
+- "internal tools", "automated frameworks", "operational excellence", "playbooks"
+- "data center", "server operations", "workflow execution", "supply chain software"
+- "process standardisation", "operational tooling", "business process automation"
+- "scripting", "Python automation", "operational debugging", "interdependencies"
+
+This archetype takes priority over Full-Stack and DevOps archetypes when the role is internal-facing (not customer-facing). Identity: infrastructure automation engineer who scripted workflow tooling, writes operational playbooks, and debugs system interdependencies.
+
+**Lead identity:**
+> "Infrastructure automation engineer — scripted workflow tooling, operational runbook design, and systematic root-cause analysis for internal engineering teams."
+
+**Lead with (priority order):**
+1. Python/Bash automation system — case distribution, ROI analysis, business case, EMEA-to-global rollout proposal
+2. Operational playbooks and runbooks — structured processes as navigable documentation, adopted team-wide
+3. Kubernetes operational depth — bootstrap automation (Step Functions + SSM + Python), not managed K8s
+4. Root cause methodology — log correlation, distributed tracing, systematic diagnosis across service dependencies
+
+**Supporting evidence:**
+- [[achievements]] Amazon Work History — Python automation + KB documentation bullets
+- [[concepts/self-hosted-kubernetes]] — K8s bootstrap operational depth
+- [[ai-engineering/self-healing-agent]] — internal tooling automation (Step Functions, SSM)
+- [[ci-cd-pipeline-architecture]] — workflow automation, operational scripts
+
+**Sample bullets:**
+```
+Identified 10–20 hours/week of manual case distribution overhead in the EMEA support
+team — designed end-to-end Python/Bash automation system, authored full ROI analysis
+and business case for EMEA and global rollout. Pending security review.
+
+Built internal knowledge base across multiple AWS teams over 3 years — HTML/CSS/JS
+structured documentation covering operational processes, runbooks, and escalation
+paths; adopted team-wide as primary reference for new engineer onboarding.
+
+Automated Kubernetes cluster bootstrap via AWS Step Functions and SSM Automation
+with Python scripts — decoupled infra recovery from full CDK redeployment, reducing
+stack failure recovery from ~30 min to ~5 min.
+```
+
+**Skills lead subsection:** Scripting & Operational Tooling — Python (AWS automation tooling, scripted case distribution system, data analysis, subprocess orchestration), Bash, AWS CLI, kubectl
+
+**Exclude entirely from this archetype:**
+- Next.js, React, Tailwind CSS, React Server Components — not relevant; remove from Skills lead and summary
+- DynamoDB single-table design — exclude unless JD explicitly mentions it
+- HMAC token verification — exclude
+- Serverless REST API design — exclude
+- "Full Stack Developer" in Freelance title — must be "Self-Directed Platform Engineer"
+
+**Projects to lead with (in this order):**
+1. Python automation system (primary) — design, ROI analysis, business case, global rollout proposal. Frame as: "internal tooling, workflow automation, business case development, operational process improvement."
+2. Kubernetes bootstrap pipeline (secondary) — Step Functions orchestration, SSM Automation, Python bootstrap scripts. Frame as: "backend systems with interdependencies, automated recovery, operational depth."
+
+**Do NOT select for this archetype:**
+- "Full Stack Portfolio Application" (Next.js, React, Tailwind) — not relevant
+- "Serverless Content API" (Lambda, DynamoDB, HMAC) — not relevant
+
+**Professional Summary framing:**
+Lead with systematic troubleshooting and automation depth, not cloud architecture. Surface Python/scripting before infrastructure. Do not open with CDK or Kubernetes as the lead credential.
+
+Example opener:
+> "Infrastructure automation engineer with 3+ years diagnosing and resolving AWS production escalations, systematically debugging across IAM, compute, and networking layers and documenting findings as operational runbooks. AWS Certified DevOps Engineer – Professional. Built Python/Bash automation tooling eliminating 10–20 hours/week of manual workflow overhead, with full ROI analysis for EMEA-to-global rollout."
+
+**Gaps to acknowledge if asked:** solo-operated (no large-team tooling deployment yet), automation system pending security approval.
+
+---
+
 ## Archetype Selector
 
 If the job description mentions: → Use archetype:
@@ -193,7 +260,15 @@ If the job description mentions: → Use archetype:
 | "React", "TypeScript", "full-stack", "frontend" | Full-Stack |
 | "LLM", "AI", "ML", "Bedrock", "RAG", "agent" | AI / ML |
 | "CI/CD", "DevOps", "pipeline", "cloud native" | DevOps / Cloud |
+| "internal tools", "automated frameworks", "operational excellence", "playbooks", "data center", "server operations", "workflow execution", "supply chain software", "process standardisation" | Operations Engineering / Internal Tooling |
 | "staff", "principal", "architect" | Mix Acts 1+2+3 equally — show breadth |
+
+**Disambiguation rule — Google-affiliated roles:**
+Google job titles can span multiple archetypes. Do not default to Full-Stack or AI. Read the team description and responsibilities:
+- "Server Operations", "Data Center Software", "Supply Chain", "operational tooling" → Archetype 6
+- "SRE", "Production Engineer", "reliability" → Archetype 2 (SRE)
+- "Software Engineer, Cloud AI", "LLM", "Gemini" → Archetype 4 (AI/ML)
+- "Software Engineer, Full Stack" with React/TypeScript → Archetype 3 (Full-Stack)
 
 ## Related Pages
 

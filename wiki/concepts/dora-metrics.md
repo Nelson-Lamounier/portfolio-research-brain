@@ -5,6 +5,13 @@ tags: [devops, ci-cd, metrics, kubernetes, dora, engineering-discipline, argo-ro
 sources: [raw/kubernetes_infrastructure_audit_16_04.md, raw/dora-metrics-review-2026-04-17.md]
 created: 2026-04-16
 updated: 2026-04-17
+do_not_claim:
+  - "CFR (Change Failure Rate) — raw figures (26% CI, 30% CD) are UNUSABLE; develop-branch WIP noise, not production failures. DORA CFR = % of production deploys causing outage or rollback — this does not qualify."
+  - "TTSR (Time to Self-Restore via ArgoCD self-heal) — unmeasured. Script exists but has never been executed against a controlled fault injection."
+  - "MTTR (Mean Time to Recovery from rollback) — unmeasured. No rollback simulation has been run."
+  - "RTO (etcd restore time) — unmeasured. etcd-restore-rto-test.sh exists but has never been executed on the control-plane node."
+  - "SLA or SLO compliance — no formal SLOs are defined. Describe as threshold-based alerting only, never as SLA compliance."
+  - "Continuous self-healing as a measured property — ArgoCD selfHeal is enabled but TTSR has not been timed."
 ---
 
 # DORA Metrics (Solo Developer)

@@ -149,6 +149,67 @@ OpenAPI-style contract enforcement.
 [CONTEXT: backend / API design / serverless / system design roles]
 ```
 
+### Operations Engineering / Internal Tooling
+
+[CONTEXT: select for JD containing "internal tools", "automated frameworks", "operational excellence", "playbooks", "data center", "server operations", "workflow execution", "supply chain software", "process standardisation". This archetype LEADS with the Python automation system, NOT with Kubernetes or CDK. Serverless and frontend bullets are excluded entirely.]
+
+**Lead bullet — Python automation system (status: IN_PROGRESS, use "currently implementing" or "designed" framing):**
+```
+Designed end-to-end Python/Bash automation system to replace 10–20 hours/week of
+manual case distribution workflow in the EMEA support team — authored full ROI
+analysis and business case for EMEA and global rollout; pending security review.
+[CONTEXT: operational tooling, business case development, internal process automation, workflow execution]
+```
+
+**Second bullet — operational runbooks and knowledge base:**
+```
+Built and maintained internal knowledge base across multiple AWS teams over 3 years —
+HTML/CSS/JavaScript structured documentation covering operational processes, runbooks,
+and escalation paths; adopted team-wide as primary reference for new engineer onboarding.
+[CONTEXT: process standardisation, playbook creation, cross-functional knowledge transfer]
+```
+
+**Third bullet — Kubernetes bootstrap automation (frame as operational tooling, not IaC):**
+```
+Automated Kubernetes cluster bootstrap via AWS Step Functions and SSM Automation
+with Python scripts — decoupled infrastructure recovery from full CDK redeployment,
+reducing stack failure recovery from ~30 min to ~5 min.
+[CONTEXT: backend systems with interdependencies, operational automation, workflow execution debugging]
+```
+
+**Fourth bullet — root cause methodology:**
+```
+Resolved AWS production escalations as final technical point of contact for enterprise
+customers — systematically diagnosed root causes across IAM, compute, VPC, and
+networking layers using CloudWatch log correlation and distributed tracing; documented
+findings as reproducible runbooks for engineering escalation reference.
+[CONTEXT: systematic troubleshooting, operational depth, cross-layer diagnosis]
+```
+
+**Project template — Python automation system (standalone project entry):**
+```
+Python/Bash Case Distribution Automation — AWS, EMEA Support Team
+Identified 10–20 hours/week of manual case distribution overhead caused by the absence
+of a programmatic routing layer. Designed an end-to-end Python/Bash automation system
+to replace the manual workflow: case ingestion, routing logic, and assignment via
+scripted subprocess orchestration. Authored a full ROI analysis quantifying the
+10–20 hr/week reduction in manual overhead and a business case for EMEA and global
+rollout proposal. Currently pending security review before deployment.
+[CONTEXT: internal tooling, workflow automation, business case development, operational process improvement]
+```
+
+**Project template — Kubernetes bootstrap pipeline (for this archetype):**
+```
+Kubernetes Bootstrap Automation — AWS Step Functions + SSM + Python
+Automated the full cluster bootstrap sequence for a self-managed Kubernetes cluster
+via kubeadm — orchestrated with AWS Step Functions, executed via SSM Automation,
+driven by Python scripts with 55 offline test assertions. The automation decoupled
+infrastructure recovery from a full CDK redeployment, reducing stack failure MTTR
+from ~30 min to ~5 min. Backend system with explicit interdependencies between
+compute provisioning, control plane readiness, and GitOps application sync.
+[CONTEXT: backend systems with interdependencies, operational automation, workflow execution debugging]
+```
+
 ### AI / ML Engineering
 
 [CONTEXT: select for JD requiring AI, LLM, Bedrock, agent orchestration, RAG, ML engineering, or AI-augmented systems roles]
