@@ -27,6 +27,46 @@ Read this page first. Then read [[concept-library]] for per-concept evidence and
 
 See [[concept-library]] for each concept's status.
 
+**Confidence score thresholds for archetype selection** (mirrored in Strategist prompt Phase 0):
+
+| Signal strength | Score | Action |
+|---|---|---|
+| 3+ trigger phrases matched | 0.9+ | High confidence — proceed with archetype |
+| 1–2 trigger phrases matched | 0.7–0.8 | Moderate confidence — proceed, flag if ambiguous |
+| No clear trigger | 0.5 | Set `archetype_gap_detected = true` — use closest match, flag for human review |
+
+---
+
+## Resume Input Path Handling
+
+Two explicit paths. The active path is determined by whether a resume is provided.
+These rules are intentionally mirrored in the Strategist Agent system prompt for enforcement when KB context is unavailable.
+
+**PATH A — No resume provided (default, recommended):**
+Generate all content entirely from KB using archetype rules.
+No structural constraints from any uploaded document.
+This is the preferred path for all new applications — produces the cleanest output with no carry-over artefacts.
+
+**PATH B — Resume provided (formatting reference only):**
+The uploaded document is a FORMATTING REFERENCE. It contributes zero content.
+
+Permitted uses:
+- Section ordering preference
+- Header and contact block format (name, email, location, links)
+
+Prohibited uses (any violation is a fabrication error):
+- Copying or paraphrasing any bullet, summary, or project description
+- Using the uploaded skills list to select or exclude skills
+- Treating any uploaded text as evidence of a claim
+
+**Empty section rule (PATH B):**
+If a section exists in the uploaded resume but has no KB evidence, leave that section EMPTY in the output — do not copy from the uploaded document to fill it.
+
+**Archetype ordering rule (PATH B):**
+If the uploaded resume structure conflicts with archetype section ordering requirements, the archetype ordering wins. The uploaded structure is a preference signal, not a constraint.
+
+Example: uploaded resume leads with frontend skills → archetype requires Kubernetes first → archetype wins.
+
 ---
 
 ## Step-by-Step: Resume Summary
